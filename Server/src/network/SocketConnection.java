@@ -21,10 +21,10 @@ public class SocketConnection extends Thread {
         this.opponent = opponent;
     }
 
-    public SocketConnection(Socket socket, GameContainer gameContainer)
+    public SocketConnection(Socket socket, Game game)
     {
         this.socket = socket;
-        this.gameContainer = gameContainer;
+        this.game = game;
     }
 
     public void run() {
@@ -40,18 +40,14 @@ public class SocketConnection extends Thread {
                 executeIncommingCommand();
             }
         }
-        catch (IOException ignored) {
-
-        }
-        catch (ClassNotFoundException e) {
-            e.printStackTrace();
-        }
-        finally
+        catch (IOException | ClassNotFoundException ignored) {
+            ignored.printStackTrace();
+        } finally
         {
             try {
                 socket.close();
             } catch (IOException ignored) {
-
+                ignored.printStackTrace();
             }
         }
     }
@@ -62,7 +58,5 @@ public class SocketConnection extends Thread {
         Command  inObject = (Command) in.readObject();
         inObject.setGame(game);
         inObject.execute();
-
-
     }
 }

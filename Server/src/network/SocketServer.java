@@ -1,5 +1,7 @@
 package network;
 
+import classes.Game;
+import classes.Player;
 import classes.game.GameContainer;
 
 import java.io.IOException;
@@ -18,10 +20,10 @@ public class SocketServer {
     private void startListening()
     {
         // TODO: DIT +IS TIJDELIJK
-        //        game = new Game();
-//        game.addPlayer(new Player("Player 1"));
-//        game.addPlayer(new Player("Player 2"));
-//        game.startGame();
+        Game game = new Game();
+        game.addPlayer(new Player("Player 1"));
+        game.addPlayer(new Player("Player 2"));
+        game.startGame();
 
         System.out.println("Server running...");
 
@@ -29,8 +31,9 @@ public class SocketServer {
         {
             while (true)
             {
-                SocketConnection sc = new SocketConnection(listener.accept(), gameContainer);
+                SocketConnection sc = new SocketConnection(listener.accept(), game);
                 sc.run();
+
             }
         } catch (IOException e) {
             e.printStackTrace();
