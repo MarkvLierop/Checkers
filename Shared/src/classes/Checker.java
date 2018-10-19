@@ -2,7 +2,9 @@ package classes;
 
 import enums.CheckerType;
 
-public class Checker
+import java.io.Serializable;
+
+public class Checker implements Serializable
 {
     private CheckerType checkerType;
 

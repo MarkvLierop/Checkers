@@ -9,27 +9,14 @@ import java.io.*;
 import java.net.Socket;
 
 public class SocketClient {
-    private static SocketClient socketClient;
     private ObjectInputStream in;
     private ObjectOutputStream out;
-
     private Game game;
-
-    public static SocketClient GetInstance()
-    {
-        if (socketClient == null)
-        {
-            socketClient = new SocketClient();
-        }
-
-        return socketClient;
-    }
 
     public Game getGame()
     {
         return game;
     }
-
     public ObjectOutputStream getOutputStream() {
         return out;
     }
@@ -38,7 +25,6 @@ public class SocketClient {
     {
         try
         {
-            game = new Game();
             setupConnection();
             executeIncommingCommands();
         }
@@ -51,31 +37,34 @@ public class SocketClient {
         String serverAddress = "localhost";
         Socket socket = new Socket(serverAddress, 5555);
 
-        OutputStream outStream = socket.getOutputStream();
-        InputStream inStream = socket.getInputStream();
-        out = new ObjectOutputStream(outStream);
-        in = new ObjectInputStream(inStream);
+        out = new ObjectOutputStream(socket.getOutputStream());
+        in = new ObjectInputStream(socket.getInputStream());
     }
 
-    private void executeIncommingCommands() {
+    private void executeIncommingCommands()
+    {
         new Thread(() -> {
-            Object inObject = null;
-            try {
-                inObject = in.readObject();
-            } catch (IOException | ClassNotFoundException e) {
-                e.printStackTrace();
-            }
-
-            if (inObject instanceof CommandGame)
+            while (true)
             {
-                CommandGame cg = (CommandGame) inObject;
-                cg.setGame(game);
-                cg.execute();
+                Object inObject = null;
+                try {
+                    inObject = in.readObject();
+                } catch (IOException | ClassNotFoundException e) {
+                    e.printStackTrace();
+                }
+                if (inObject instanceof CommandGame)
+                {
+                    CommandGame cg = (CommandGame) inObject;
+                    cg.setGame(game);
+                    cg.execute();
+                    System.out.println("Command received");
+                }
+                else if (inObject instanceof Game)
+                {
+                    game = ((Game)inObject);
+                    System.out.println("Game received");
+                }
             }
-            else if (inObject instanceof CommandPlayer)
-            {
-                CommandPlayer cp = (CommandPlayer) inObject;
-            }
-        });
+        }).start();
     }
 }

@@ -14,7 +14,6 @@ public class NewGame extends Command{
         return player;
     }
 
-
     @Override
     public void execute() {
 

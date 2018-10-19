@@ -19,21 +19,22 @@ public class SocketServer {
 
     private void startListening()
     {
-        // TODO: DIT +IS TIJDELIJK
-        Game game = new Game();
-        game.addPlayer(new Player("Player 1"));
-        game.addPlayer(new Player("Player 2"));
-        game.startGame();
+//        // TODO: DIT +IS TIJDELIJK
+//        Game game = new Game();
+//        game.addPlayer(new Player("Player 1"));
+//        game.addPlayer(new Player("Player 2"));
+//        game.startGame();
 
+        gameContainer = new GameContainer();
         System.out.println("Server running...");
 
         try (ServerSocket listener = new ServerSocket(5555))
         {
             while (true)
             {
-                SocketConnection sc = new SocketConnection(listener.accept(), game);
-                sc.run();
-
+                SocketConnection sc = new SocketConnection(listener.accept(), gameContainer);
+                Thread t = new Thread(sc);
+                t.start();
             }
         } catch (IOException e) {
             e.printStackTrace();

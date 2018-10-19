@@ -2,11 +2,12 @@ package classes;
 
 import enums.PlayerNumber;
 
+import java.io.Serializable;
 import java.util.Collections;
 import java.util.Map;
 import java.util.TreeMap;
 
-public class Player
+public class Player implements Serializable
 {
     private String username;
     private int wins;
@@ -28,12 +29,16 @@ public class Player
     {
         return playerNumber;
     }
+    public void setPlayerNumber(PlayerNumber playerNumber)
+    {
+        this.playerNumber = playerNumber;
+    }
 
-    public void moveChecker(int from, int to)
+    public synchronized void moveChecker(int from, int to)
     {
         checkers.put(to, checkers.get(from));
         checkers.remove(from);
-        System.out.println("moved");
+        System.out.println("moved from " + from + " to " + to);
     }
 
     public void addCheckers(PlayerNumber playerNumber)
@@ -45,53 +50,26 @@ public class Player
         {
             for (int y = 0; y < 10; y++)
             {
-                if (playerNumber == PlayerNumber.ONE && x <= 4)
+                if (playerNumber == PlayerNumber.ONE && x <= 3)
                 {
-                    // TODO: REFACTORING
-                    if (x == 0 && Integer.parseInt(x + "" + y) % 2 == 1)
-                    {
-                        checkers.put(Integer.parseInt(x + "" + y), new Checker());
-                        System.out.println(username + " - "+ x + "" + y);
-                    }
-                    if (x == 1 && Integer.parseInt(x + "" + y) % 2 == 0)
-                    {
-                        checkers.put(Integer.parseInt(x + "" + y), new Checker());
-                        System.out.println(username + " - "+ x + "" + y);
-                    }
-                    if (x == 2 && Integer.parseInt(x + "" + y) % 2 == 1)
-                    {
-                        checkers.put(Integer.parseInt(x + "" + y), new Checker());
-                        System.out.println(username + " - "+ x + "" + y);
-                    }
-                    if (x == 3 && Integer.parseInt(x + "" + y) % 2 == 0)
-                    {
-                        checkers.put(Integer.parseInt(x + "" + y), new Checker());
-                        System.out.println(username + " - "+ x + "" + y);
-                    }
+                    addChecker(x, y);
                 }
                 else if (playerNumber == PlayerNumber.TWO && x >= 6)
                 {
-                    if (x == 6 && Integer.parseInt(x + "" + y) % 2 == 1)
-                    {
-                        checkers.put(Integer.parseInt(x + "" + y), new Checker());
-                        System.out.println(username + " - "+ x + "" + y);
-                    }
-                    if (x == 7 && Integer.parseInt(x + "" + y) % 2 == 0)
-                    {
-                        checkers.put(Integer.parseInt(x + "" + y), new Checker());
-                        System.out.println(username + " - "+ x + "" + y);
-                    }
-                    if (x == 8 && Integer.parseInt(x + "" + y) % 2 == 1)
-                    {
-                        checkers.put(Integer.parseInt(x + "" + y), new Checker());
-                        System.out.println(username + " - "+ x + "" + y);
-                    }
-                    if (x == 9 && Integer.parseInt(x + "" + y) % 2 == 0)
-                    {
-                        checkers.put(Integer.parseInt(x + "" + y), new Checker());
-                        System.out.println(username + " - "+ x + "" + y);
-                    }
+                    addChecker(x, y);
                 }
+            }
+        }
+
+    }
+    private void addChecker(int x, int y)
+    {
+        for (int i = x; i < x + 4; i++)
+        {
+            if (x == i && Integer.parseInt(x + "" + y) % 2 != i % 2)
+            {
+                checkers.put(Integer.parseInt(x + "" + y), new Checker());
+                System.out.println(username + " - "+ x + "" + y);
             }
         }
     }

@@ -2,6 +2,7 @@ package classes.game;
 
 import classes.Game;
 import classes.Player;
+import enums.PlayerNumber;
 import network.SocketConnection;
 
 import java.util.*;
@@ -14,30 +15,29 @@ public class GameContainer {
         games = new TreeMap<>();
     }
 
-    public void newGame(Player player, SocketConnection connection)
+    public Game newGame(Player player, SocketConnection connection)
     {
-        boolean gameFound = false;
-
         for (Map.Entry<Game, List<SocketConnection>> pair : games.entrySet())
         {
             if (pair.getKey().addPlayer(player))
             {
-                gameFound = true;
                 // TODO: Refactor
-                pair.getValue().get(0).setOpponent(connection);
+                        player.addCheckers(PlayerNumber.TWO);
+                pair.getValue().get(0).setOpponent(connection); // dit
                 connection.setOpponent(pair.getValue().get(0));
                 pair.getValue().add(connection);
-                break;
+                System.out.println("gamefound");
+                return pair.getKey();
             }
         }
 
-        if (!gameFound)
-        {
-            Game game = new Game();
-            game.addPlayer(player);
-            games.put(game, new ArrayList<SocketConnection>() {{
-                add(connection);
-            }});
-        }
+        System.out.println("new game created");
+        Game game = new Game();
+        player.addCheckers(PlayerNumber.ONE);
+        game.addPlayer(player);
+        games.put(game, new ArrayList<SocketConnection>() {{
+            add(connection);
+        }});
+        return game;
     }
 }

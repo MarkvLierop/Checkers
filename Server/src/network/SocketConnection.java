@@ -1,14 +1,16 @@
 package network;
 
 import classes.Game;
+import classes.Player;
 import classes.game.GameContainer;
+import enums.PlayerNumber;
 import network.command_types.Command;
 import network.commands.NewGame;
 
 import java.io.*;
 import java.net.Socket;
 
-public class SocketConnection extends Thread {
+public class SocketConnection implements Runnable {
     private Socket socket;
     private ObjectInputStream in;
     private ObjectOutputStream out;
@@ -21,10 +23,10 @@ public class SocketConnection extends Thread {
         this.opponent = opponent;
     }
 
-    public SocketConnection(Socket socket, Game game)
+    public SocketConnection(Socket socket, GameContainer gc)
     {
+        gameContainer = gc;
         this.socket = socket;
-        this.game = game;
     }
 
     public void run() {
@@ -32,8 +34,11 @@ public class SocketConnection extends Thread {
             OutputStream outStream = socket.getOutputStream();
             InputStream inStream = socket.getInputStream();
 
-            in = new ObjectInputStream(inStream);
             out = new ObjectOutputStream(outStream);
+            in = new ObjectInputStream(inStream);
+
+//            game = gameContainer.newGame(new Player("username"), this);
+//            out.writeObject(game);
 
             while (true)
             {
@@ -52,11 +57,28 @@ public class SocketConnection extends Thread {
         }
     }
 
+    private void sendCommand(Command command) throws IOException {
+        out.writeObject(command);
+        System.out.println("Command sent");
+    }
 
     private void executeIncommingCommand() throws IOException, ClassNotFoundException
     {
-        Command  inObject = (Command) in.readObject();
-        inObject.setGame(game);
-        inObject.execute();
+        Object object = in.readObject();
+        if (object instanceof NewGame)
+        {
+            game = gameContainer.newGame(((NewGame) object).getPlayer(), this);
+            out.writeObject(game);
+            System.out.println("Game sent");
+        }
+        else {
+            Command  inObject = (Command) in.readObject();
+            inObject.setGame(game);
+            inObject.execute();
+            out.writeObject(inObject);
+
+            if (opponent != null)
+                opponent.sendCommand(inObject);
+        }
     }
 }
