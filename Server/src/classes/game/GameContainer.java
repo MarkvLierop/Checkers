@@ -22,7 +22,6 @@ public class GameContainer {
             if (pair.getKey().addPlayer(player))
             {
                 // TODO: Refactor
-                        player.addCheckers(PlayerNumber.TWO);
                 pair.getValue().get(0).setOpponent(connection); // dit
                 connection.setOpponent(pair.getValue().get(0));
                 pair.getValue().add(connection);
@@ -33,7 +32,6 @@ public class GameContainer {
 
         System.out.println("new game created");
         Game game = new Game();
-        player.addCheckers(PlayerNumber.ONE);
         game.addPlayer(player);
         games.put(game, new ArrayList<SocketConnection>() {{
             add(connection);

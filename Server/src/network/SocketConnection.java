@@ -5,7 +5,9 @@ import classes.Player;
 import classes.game.GameContainer;
 import enums.PlayerNumber;
 import network.command_types.Command;
+import network.commands.AddPlayerTwo;
 import network.commands.NewGame;
+import network.commands.StartGame;
 
 import java.io.*;
 import java.net.Socket;
@@ -37,13 +39,7 @@ public class SocketConnection implements Runnable {
             out = new ObjectOutputStream(outStream);
             in = new ObjectInputStream(inStream);
 
-//            game = gameContainer.newGame(new Player("username"), this);
-//            out.writeObject(game);
-
-            while (true)
-            {
-                executeIncommingCommand();
-            }
+            executeIncommingCommand();
         }
         catch (IOException | ClassNotFoundException ignored) {
             ignored.printStackTrace();
@@ -64,21 +60,41 @@ public class SocketConnection implements Runnable {
 
     private void executeIncommingCommand() throws IOException, ClassNotFoundException
     {
-        Object object = in.readObject();
-        if (object instanceof NewGame)
+        while (true)
         {
-            game = gameContainer.newGame(((NewGame) object).getPlayer(), this);
-            out.writeObject(game);
-            System.out.println("Game sent");
-        }
-        else {
-            Command  inObject = (Command) in.readObject();
-            inObject.setGame(game);
-            inObject.execute();
-            out.writeObject(inObject);
+            Object object = in.readObject();
+            if (object instanceof NewGame)
+            {
+                newGame(object);
+            }
+            else {
+                Command  inObject = (Command) in.readObject();
+                inObject.setGame(game);
+                inObject.execute();
+                out.writeObject(inObject);
 
-            if (opponent != null)
-                opponent.sendCommand(inObject);
+                if (opponent != null)
+                    opponent.sendCommand(inObject);
+            }
         }
+    }
+
+    private void newGame(Object object) throws IOException {
+        game = gameContainer.newGame(((NewGame) object).getPlayer(), this);
+
+        if (game.getPlayerTwo() == null)
+        {
+            out.writeObject(new InitialData(game, PlayerNumber.ONE));
+        }
+        else
+        {
+            game.startGame();
+            out.writeObject(new InitialData(game, PlayerNumber.TWO));
+            out.writeObject(new StartGame());
+            opponent.sendCommand(new AddPlayerTwo(game.getPlayerTwo()));
+            opponent.sendCommand(new StartGame());
+        }
+
+        System.out.println("Game sent");
     }
 }

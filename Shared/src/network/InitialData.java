@@ -2,13 +2,16 @@ package network;
 
 import classes.Game;
 import classes.Player;
+import enums.PlayerNumber;
 
-public class InitialData {
+import java.io.Serializable;
+
+public class InitialData implements Serializable {
 
     private Game game;
-    private Player player;
+    private PlayerNumber player;
 
-    public InitialData(Game game, Player player)
+    public InitialData(Game game, PlayerNumber player)
     {
         this.game = game;
         this.player = player;
@@ -18,7 +21,7 @@ public class InitialData {
         return game;
     }
 
-    public Player getPlayer() {
+    public PlayerNumber getPlayerNumber() {
         return player;
     }
 }

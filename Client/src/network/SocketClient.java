@@ -1,6 +1,7 @@
 package network;
 
 import classes.Game;
+import enums.PlayerNumber;
 import network.command_types.CommandGame;
 import network.command_types.CommandPlayer;
 import ui.GameScreen;
@@ -12,11 +13,13 @@ public class SocketClient {
     private ObjectInputStream in;
     private ObjectOutputStream out;
     private Game game;
+    public PlayerNumber playerNumber;
 
     public Game getGame()
     {
         return game;
     }
+    public PlayerNumber getPlayerNumber() { return playerNumber; }
     public ObjectOutputStream getOutputStream() {
         return out;
     }
@@ -57,11 +60,12 @@ public class SocketClient {
                     CommandGame cg = (CommandGame) inObject;
                     cg.setGame(game);
                     cg.execute();
-                    System.out.println("Command received");
                 }
-                else if (inObject instanceof Game)
+                else if (inObject instanceof InitialData)
                 {
-                    game = ((Game)inObject);
+                    InitialData initialData = ((InitialData)inObject);
+                    game = initialData.getGame();
+                    playerNumber = initialData.getPlayerNumber();
                     System.out.println("Game received");
                 }
             }

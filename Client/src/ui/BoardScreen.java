@@ -40,13 +40,18 @@ public class BoardScreen extends Application
                 int xLocation = y * (TILE_SIZE) + TILE_SIZE;
                 int yLocation = x * TILE_SIZE;
 
-//                if (x % 2 == 0 && y % 2 != 0 ||
-//                        x % 2 != 0 && y % 2 == 0) {
-//                    tile.setFill(Color.BLACK);
-//                }
-//                else {
-//                    tile.setFill(Color.WHITE);
-//                }
+                if (x % 2 == 0 && y % 2 != 0 ||
+                        x % 2 != 0 && y % 2 == 0) {
+                    gc.setFill(Color.BLACK);
+                    gc.setStroke(Color.WHITE);
+                }
+                else {
+                    gc.setFill(Color.WHITE);
+                    gc.setStroke(Color.BLACK);
+                }
+
+                gc.fillRect(xLocation, yLocation, TILE_SIZE, TILE_SIZE);
+                gc.strokeText(x+""+y, xLocation, yLocation + TILE_SIZE);
             }
         }
     }

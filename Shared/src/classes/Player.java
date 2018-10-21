@@ -1,5 +1,6 @@
 package classes;
 
+import enums.CheckerType;
 import enums.PlayerNumber;
 
 import java.io.Serializable;
@@ -15,16 +16,10 @@ public class Player implements Serializable
     private Map<Integer, Checker> checkers;
     private PlayerNumber playerNumber;
 
-    public Player(String username)
-    {
-        this.username = username;
-    }
-
     public Map<Integer, Checker> getCheckers()
     {
         return Collections.unmodifiableMap(checkers);
     }
-
     public PlayerNumber getPlayerNumber()
     {
         return playerNumber;
@@ -33,6 +28,12 @@ public class Player implements Serializable
     {
         this.playerNumber = playerNumber;
     }
+    public String getUsername() { return username; }
+    public Player(String username)
+    {
+        this.username = username;
+    }
+
 
     public synchronized void moveChecker(int from, int to)
     {
@@ -68,8 +69,9 @@ public class Player implements Serializable
         {
             if (x == i && Integer.parseInt(x + "" + y) % 2 != i % 2)
             {
-                checkers.put(Integer.parseInt(x + "" + y), new Checker());
-                System.out.println(username + " - "+ x + "" + y);
+                Checker checker = new Checker();
+                checker.setCheckerType(CheckerType.CHECKER);
+                checkers.put(Integer.parseInt(x + "" + y), checker);
             }
         }
     }

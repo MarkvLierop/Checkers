@@ -5,12 +5,19 @@ import enums.PlayerNumber;
 import java.io.Serializable;
 import java.util.HashSet;
 import java.util.Map;
+import java.util.Random;
 import java.util.Set;
+import java.util.concurrent.ThreadLocalRandom;
 
 public class Game implements Serializable, Comparable
 {
     private Player playerOne;
     private Player playerTwo;
+    private String currentTurn;
+    private boolean gameStarted;
+
+    private final int NINE = 9;
+    private final int ELEVEN = 11;
 
     public Player getPlayerOne() {
         return playerOne;
@@ -18,26 +25,28 @@ public class Game implements Serializable, Comparable
     public Player getPlayerTwo() {
         return playerTwo;
     }
-
-
-    private final int NINE = 9;
-    private final int ELEVEN = 11;
+    public void setPlayerTwo(Player playerTwo) { this.playerTwo = playerTwo; }
+    public String getCurrentTurn() { return currentTurn; }
+    public boolean isGameStarted() { return gameStarted; }
 
     public Game() {
-
+        gameStarted = false;
     }
 
-    public boolean startGame()
+    public void startGame()
     {
-        if (playerOne == null)
-            return false;
-        if (playerTwo == null)
-            return false;
+        playerOne.addCheckers(PlayerNumber.ONE);
+        playerTwo.addCheckers(PlayerNumber.TWO);
 
-//        playerOne.addCheckers(PlayerNumber.ONE);
-//        playerTwo.addCheckers(PlayerNumber.TWO);
+        int randomNum = ThreadLocalRandom.current().nextInt(0,1);
+        if (randomNum == 0)
+            currentTurn = playerOne.getUsername();
+        else
+            currentTurn = playerTwo.getUsername();
 
-        return true;
+        gameStarted = true;
+
+        System.out.println("Game started.");
     }
 
     public void moveChecker(PlayerNumber playerNumber, int from, int to)
@@ -51,6 +60,11 @@ public class Game implements Serializable, Comparable
                 playerTwo.moveChecker(from, to);
                 break;
         }
+
+        if (playerOne.getPlayerNumber() != playerNumber)
+            currentTurn = playerOne.getUsername();
+        else
+            currentTurn = playerTwo.getUsername();
     }
 
     public Set<Integer> getAvailableMoves(PlayerNumber playerNumber)
@@ -62,10 +76,10 @@ public class Game implements Serializable, Comparable
             case ONE:
                 for (Map.Entry<Integer, Checker> pair : playerOne.getCheckers().entrySet())
                 {
-                    if (!playerTwo.getCheckers().containsKey(pair.getKey() + NINE)){
+                    if (!playerTwo.getCheckers().containsKey(pair.getKey() + NINE) && pair.getKey() % 10 != 0){
                         availableMoves.add(pair.getKey() + NINE);
                     }
-                    if (!playerTwo.getCheckers().containsKey(pair.getKey() + ELEVEN)){
+                    if (!playerTwo.getCheckers().containsKey(pair.getKey() + ELEVEN) && pair.getKey() % 10 != 9){
                         availableMoves.add(pair.getKey() + ELEVEN);
                     }
                 }
@@ -73,10 +87,10 @@ public class Game implements Serializable, Comparable
             case TWO:
                 for (Map.Entry<Integer, Checker> pair : playerTwo.getCheckers().entrySet())
                 {
-                    if (!playerOne.getCheckers().containsKey(pair.getKey() - NINE)){
+                    if (!playerOne.getCheckers().containsKey(pair.getKey() - NINE)&& pair.getKey() % 10 != 9){
                         availableMoves.add(pair.getKey() - NINE);
                     }
-                    if (!playerOne.getCheckers().containsKey(pair.getKey() - ELEVEN)){
+                    if (!playerOne.getCheckers().containsKey(pair.getKey() - ELEVEN)&& pair.getKey() % 10 != 0){
                         availableMoves.add(pair.getKey() - ELEVEN);
                     }
                 }
@@ -95,27 +109,13 @@ public class Game implements Serializable, Comparable
             case ONE:
                 for (Map.Entry<Integer, Checker> pair : playerOne.getCheckers().entrySet())
                 {
-                    Set<Integer> availableHits = new HashSet<>();
-                    checkForChecker(availableHits, playerTwo, pair.getKey(), Operator.ADDITION, NINE);
-                    checkForChecker(availableHits, playerTwo, pair.getKey(), Operator.SUBTRACTION, NINE);
-                    checkForChecker(availableHits, playerTwo, pair.getKey(), Operator.ADDITION, ELEVEN);
-                    checkForChecker(availableHits, playerTwo, pair.getKey(), Operator.SUBTRACTION, ELEVEN);
-
-                    if (!availableHits.isEmpty())
-                        availableHitsSet.add(availableHits);
+                    checkForCheckers(playerTwo, availableHitsSet, pair.getKey());
                 }
                 break;
             case TWO:
                 for (Map.Entry<Integer, Checker> pair : playerTwo.getCheckers().entrySet())
                 {
-                    Set<Integer> availableHits = new HashSet<>();
-                    checkForChecker(availableHits, playerOne, pair.getKey(), Operator.ADDITION, NINE);
-                    checkForChecker(availableHits, playerOne, pair.getKey(), Operator.SUBTRACTION, NINE);
-                    checkForChecker(availableHits, playerOne, pair.getKey(), Operator.ADDITION, ELEVEN);
-                    checkForChecker(availableHits, playerOne, pair.getKey(), Operator.SUBTRACTION, ELEVEN);
-
-                    if (!availableHits.isEmpty())
-                        availableHitsSet.add(availableHits);
+                    checkForCheckers(playerOne, availableHitsSet, pair.getKey());
                 }
                 break;
         }
@@ -123,20 +123,38 @@ public class Game implements Serializable, Comparable
         return availableHitsSet;
     }
 
-    private void checkForChecker(Set<Integer> availableMoves, Player player, int tileNr, Operator op, int possibleTileNr)
+    private void checkForCheckers(Player player, Set<Set<Integer>> availableHitsSet, int checkerLocation)
     {
-        if (player.getCheckers().containsKey(op.apply(tileNr, possibleTileNr))){
-            checkForTile(availableMoves, player, op.apply(tileNr, possibleTileNr), op, possibleTileNr);
+        Set<Integer> availableHits = new HashSet<>();
+
+        if (checkerLocation % 10 != 0)
+            checkForChecker(availableHits, player, checkerLocation, Operator.ADDITION, NINE);
+        if (checkerLocation % 10 != 9)
+            checkForChecker(availableHits, player, checkerLocation, Operator.SUBTRACTION, NINE);
+        if (checkerLocation % 10 != 9)
+            checkForChecker(availableHits, player, checkerLocation, Operator.ADDITION, ELEVEN);
+        if (checkerLocation % 10 != 0)
+            checkForChecker(availableHits, player, checkerLocation, Operator.SUBTRACTION, ELEVEN);
+
+        if (!availableHits.isEmpty())
+            availableHitsSet.add(availableHits);
+    }
+
+    private void checkForChecker(Set<Integer> availableMoves, Player player, int checkerLocation, Operator op, int possibleTileNr)
+    {
+        if (player.getCheckers().containsKey(op.apply(checkerLocation, possibleTileNr))){
+            checkForTile(availableMoves, player, op.apply(checkerLocation, possibleTileNr), op, possibleTileNr);
         }
     }
+
     private void checkForTile(Set<Integer> availableMoves, Player player, int tileNr, Operator op, int possibleTileNr)
     {
         if (!player.getCheckers().containsKey(op.apply(tileNr, possibleTileNr))){
             availableMoves.add(op.apply(tileNr, possibleTileNr));
-            checkForChecker(availableMoves, playerTwo, tileNr, Operator.ADDITION, NINE);
-            checkForChecker(availableMoves, playerTwo, tileNr, Operator.SUBTRACTION, NINE);
-            checkForChecker(availableMoves, playerTwo, tileNr, Operator.ADDITION, ELEVEN);
-            checkForChecker(availableMoves, playerTwo, tileNr, Operator.SUBTRACTION, ELEVEN);
+            checkForChecker(availableMoves, player, tileNr, Operator.ADDITION, NINE);
+            checkForChecker(availableMoves, player, tileNr, Operator.SUBTRACTION, NINE);
+            checkForChecker(availableMoves, player, tileNr, Operator.ADDITION, ELEVEN);
+            checkForChecker(availableMoves, player, tileNr, Operator.SUBTRACTION, ELEVEN);
         }
     }
 
