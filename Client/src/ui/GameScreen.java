@@ -6,35 +6,26 @@ import classes.Player;
 import enums.PlayerNumber;
 import javafx.application.Application;
 import javafx.application.Platform;
-import java.util.Timer;
 import javafx.scene.Parent;
 import javafx.scene.Scene;
 import javafx.scene.control.Button;
-import javafx.scene.control.TextArea;
-import javafx.scene.input.*;
-import javafx.scene.layout.AnchorPane;
 import javafx.scene.layout.GridPane;
 import javafx.scene.layout.Pane;
 import javafx.scene.paint.Color;
 import javafx.scene.shape.Circle;
 import javafx.scene.shape.Rectangle;
-import javafx.scene.shape.Shape;
 import javafx.scene.text.Font;
 import javafx.scene.text.Text;
 import javafx.stage.Stage;
 import network.SocketClient;
 import network.commands.MoveChecker;
 import network.commands.NewGame;
-
-import javax.swing.*;
 import java.awt.*;
 import java.io.IOException;
 import java.io.ObjectOutputStream;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
-import java.util.Timer;
-import java.util.TimerTask;
+import java.util.Set;
 
 public class GameScreen extends Application
 {
@@ -42,7 +33,6 @@ public class GameScreen extends Application
     private static final int FONT_SIZE = 16;
     private Pane root;
     private Pane checkersPane;
-    private Pane gridPane;
     private Text txtCurrentTurn;
     private Text txtWaitingForPlayer;
     private Text txtUsernamePlayerOne;
@@ -50,7 +40,6 @@ public class GameScreen extends Application
     private Dimension screenSize;
 
     private SocketClient sc;
-    private ObjectOutputStream objectOutputStream;
     private Game game;
     private Player player;
 
@@ -58,11 +47,10 @@ public class GameScreen extends Application
 
     private Parent createContent() {
         root = new Pane();
-        gridPane = new GridPane();
         checkersPane = new Pane();
 
-        gridPane.getChildren().addAll(createGrid());
-        root.getChildren().addAll(gridPane);
+        checkersPane.getChildren().addAll(createGrid());
+        root.getChildren().addAll(checkersPane);
         root.getChildren().addAll(btnNewGame());
         root.getChildren().addAll(txtCurrentTurn());
         root.getChildren().addAll(txtWaitingForPlayer());
@@ -84,21 +72,21 @@ public class GameScreen extends Application
 
     private void addPlayerOneCheckers(List<Circle> checkers)
     {
-        for (Map.Entry<Integer, Checker> pair : game.getPlayerOne().getCheckers().entrySet())
+        for (Checker checker : game.getPlayerOne().getCheckers())
         {
-            Circle checker = createChecker(pair.getKey(), game.getPlayerOne().getPlayerNumber());
-            checker.setFill(Color.PINK);
-            checkers.add(checker);
+            Circle checkerCircle = createChecker(checker.getLocation(), game.getPlayerOne().getPlayerNumber());
+            checkerCircle.setFill(Color.PINK);
+            checkers.add(checkerCircle);
         }
     }
 
     private void addPlayerTwoCheckers(List<Circle> checkers)
     {
-        for (Map.Entry<Integer, Checker> pair : game.getPlayerTwo().getCheckers().entrySet())
+        for (Checker checker : game.getPlayerTwo().getCheckers())
         {
-            Circle checker = createChecker(pair.getKey(), game.getPlayerTwo().getPlayerNumber());
-            checker.setFill(Color.LIGHTBLUE);
-            checkers.add(checker);
+            Circle checkerCircle = createChecker(checker.getLocation(), game.getPlayerTwo().getPlayerNumber());
+            checkerCircle.setFill(Color.LIGHTBLUE);
+            checkers.add(checkerCircle);
         }
     }
 
@@ -134,12 +122,150 @@ public class GameScreen extends Application
     private void setCheckerEvent(Circle checker, int location)
     {
         checker.setOnMouseClicked(e -> {
-            selectedCheckerPosition = location;
-            gridPane.toFront();
-            System.out.print("checker selected " + selectedCheckerPosition);
+            if (sc.getPlayerNumber().equals(game.getCurrentTurn()))
+            {
+                selectedCheckerPosition = location;
+            }
         });
     }
 
+    private List<Rectangle> createGrid() {
+        List<Rectangle> list = new ArrayList<>();
+
+        for (int x = 0; x < 10; x++)
+        {
+            for (int y = 0; y < 10; y++)
+            {
+                list.add(createTile(x, y));
+            }
+        }
+
+        return list;
+    }
+
+    private Rectangle createTile(int x, int y)
+    {
+        int toLocation = Integer.parseInt(x + "" + y);
+
+        Rectangle tile = new Rectangle(TILE_SIZE, TILE_SIZE);
+        setTileEvent(tile, toLocation);
+
+        tile.setTranslateX(y * (TILE_SIZE) + (TILE_SIZE * 2));
+        tile.setTranslateY(x * TILE_SIZE);
+
+        if (x % 2 == 0 && y % 2 != 0 ||
+                x % 2 != 0 && y % 2 == 0) {
+            if (sc.getGame() != null)
+            {
+                if (sc.getGame().getPlayerByPlayerNumber(sc.getPlayerNumber()).getAvailableMoves().isEmpty())
+                    tile.setFill(Color.BLACK);
+                else if (sc.getGame().getPlayerByPlayerNumber(sc.getPlayerNumber()).availablMovesContainsInt(toLocation))
+                    tile.setFill(Color.DARKRED);
+            }
+            else
+                tile.setFill(Color.BLACK);
+        }
+        else {
+            tile.setFill(Color.WHITE);
+        }
+
+        return tile;
+    }
+
+    private void setTileEvent(Rectangle tile, int toLocation)
+    {
+        tile.setOnMouseClicked(event -> {
+            if (selectedCheckerPosition != 0 && sc.getPlayerNumber().equals(game.getCurrentTurn()))
+            {
+                try {
+                    sc.setWaitingForServer(true);
+                    sc.sendCommand(new MoveChecker(player.getPlayerNumber(), selectedCheckerPosition, toLocation));
+
+                    refreshBoardOnServerResponse();
+                    refreshBoardOnTurnStart();
+                } catch (IOException e1) {
+                    e1.printStackTrace();
+                }
+                selectedCheckerPosition = 0;
+            }
+        });
+    }
+
+    private void waitForPlayer()
+    {
+        txtWaitingForPlayer.setVisible(true);
+
+        Platform.runLater(() -> {
+            while (true)
+            {
+                if (game.isGameStarted())
+                {
+                    txtWaitingForPlayer.setVisible(false);
+                    txtUsernamePlayerOne.setText(game.getPlayerOne().getUsername());
+                    txtUsernamePlayerTwo.setText(game.getPlayerTwo().getUsername());
+                    txtCurrentTurn.setText("Current Turn: " + sc.getGame().getCurrentTurn() + "\n You are " + sc.getPlayerNumber());
+                    checkersPane.getChildren().addAll(addCheckersToGrid());
+
+//                    refreshBoardOnTurnStart();
+                    break;
+                }
+            }
+        });
+    }
+
+    private void refreshBoardOnServerResponse()
+    {
+        new Thread(() -> {
+            while (true)
+            {
+                if (!sc.isWaitingForServerResponse())
+                {
+                    Platform.runLater(this::refresh);
+                    break;
+                }
+            }
+        }).start();
+    }
+
+    private void refreshBoardOnTurnStart()
+    {
+        new Thread(() -> {
+            while (true)
+            {
+                try {
+                    Thread.sleep(1000);
+                } catch (InterruptedException e) {
+                    e.printStackTrace();
+                }
+
+                if (sc.getGame().getCurrentTurn() == sc.getPlayerNumber())
+                {
+                    for (Set<Integer> set : sc.getGame().getPlayerByPlayerNumber(sc.getPlayerNumber()).getAvailableMoves().values())
+                    {
+                        for (Integer value : set)
+                        {
+                            System.out.println("Available moves " + value);
+                        }
+                    }
+
+                    Platform.runLater(this::refresh);
+                    break;
+                }
+            }
+        }).start();
+    }
+
+    private void refresh()
+    {
+        txtCurrentTurn.setText("Current Turn: " + game.getCurrentTurn() + "\n You are " + sc.getPlayerNumber());
+        checkersPane.getChildren().clear();
+        checkersPane.getChildren().addAll(createGrid());
+        checkersPane.getChildren().addAll(addCheckersToGrid());
+    }
+
+    /*----------------*/
+    /* UI CONTROLS */
+    /*----------------*/
     private Button btnNewGame()
     {
         Button btnNewGame = new Button("New Game");
@@ -154,20 +280,23 @@ public class GameScreen extends Application
     {
         btnNewGame.setOnMouseClicked(event ->{
             try {
-                objectOutputStream.writeObject(new NewGame(player));
+                sc.sendCommand(new NewGame(player));
+
                 Platform.runLater(() -> {
                     while (true) // TODO: AANPASSEN? Asynchrone aanvraag oplossing
                     {
-                        if (sc.getGame() != null)
+                        if (sc.getGame() != null && sc.getGame().isGameStarted())
                         {
                             game = sc.getGame();
                             player.setPlayerNumber(sc.getPlayerNumber());
+
                             break;
                         }
                     }
                 });
 
                 waitForPlayer();
+
             } catch (IOException e) {
                 e.printStackTrace();
             }
@@ -213,93 +342,9 @@ public class GameScreen extends Application
         return txtWaitingForPlayer;
     }
 
-    private void waitForPlayer()
-    {
-        txtWaitingForPlayer.setVisible(true);
-
-        Platform.runLater(() -> {
-            while (true)
-            {
-                if (sc.getGame().isGameStarted())
-                {
-                    txtWaitingForPlayer.setVisible(false);
-                    txtUsernamePlayerOne.setText(game.getPlayerOne().getUsername());
-                    txtUsernamePlayerTwo.setText(game.getPlayerTwo().getUsername());
-                    txtCurrentTurn.setText("Current Turn: " + game.getCurrentTurn());
-                    checkersPane.getChildren().addAll(addCheckersToGrid());
-                    root.getChildren().addAll(checkersPane);
-
-                    break;
-                }
-            }
-        });
-    }
-
-    private List<Rectangle> createGrid() {
-        List<Rectangle> list = new ArrayList<>();
-
-        for (int x = 0; x < 10; x++)
-        {
-            for (int y = 0; y < 10; y++)
-            {
-                list.add(createTile(x, y));
-            }
-        }
-
-        return list;
-    }
-
-    private Rectangle createTile(int x, int y)
-    {
-        int toLocation = Integer.parseInt(x + "" + y);
-
-        Rectangle tile = new Rectangle(TILE_SIZE, TILE_SIZE);
-        setTileEvent(tile, toLocation);
-
-        tile.setTranslateX(y * (TILE_SIZE) + (TILE_SIZE * 2));
-        tile.setTranslateY(x * TILE_SIZE);
-
-        if (x % 2 == 0 && y % 2 != 0 ||
-                x % 2 != 0 && y % 2 == 0) {
-            tile.setFill(Color.BLACK);
-        }
-        else {
-            tile.setFill(Color.WHITE);
-        }
-
-        return tile;
-    }
-
-    private void setTileEvent(Rectangle tile, int toLocation)
-    {
-        tile.setOnMouseClicked(event -> {
-            if (selectedCheckerPosition != 0 && player.getUsername().equals(game.getCurrentTurn()))
-            {
-                try {
-                    objectOutputStream.writeObject(
-                            new MoveChecker(player.getPlayerNumber(), selectedCheckerPosition, toLocation));
-                    System.out.println("move sent");
-                } catch (IOException e1) {
-                    e1.printStackTrace();
-                }
-                selectedCheckerPosition = 0;
-                txtCurrentTurn.setText("Current Turn: " + game.getCurrentTurn());
-                checkersPane.toFront();
-                drawCheckers();
-            }
-        });
-    }
-
-    private void drawCheckers()
-    {
-        checkersPane.getChildren().clear();
-        checkersPane.getChildren().addAll(addCheckersToGrid());
-    }
-
     @Override
     public void start(Stage primaryStage) {
         sc = new SocketClient();
-        objectOutputStream = sc.getOutputStream();
         screenSize = Toolkit.getDefaultToolkit().getScreenSize();
 
         player = new Player("Player 2"); // TODO: AAnpassen; inloggen

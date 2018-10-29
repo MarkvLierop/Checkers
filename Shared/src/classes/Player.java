@@ -4,21 +4,20 @@ import enums.CheckerType;
 import enums.PlayerNumber;
 
 import java.io.Serializable;
-import java.util.Collections;
-import java.util.Map;
-import java.util.TreeMap;
+import java.util.*;
 
 public class Player implements Serializable
 {
     private String username;
     private int wins;
     private int losses;
-    private Map<Integer, Checker> checkers;
+    private List<Checker> checkers;
+    private Map<Checker, Set<Integer>> availableMoves;
     private PlayerNumber playerNumber;
 
-    public Map<Integer, Checker> getCheckers()
+    public List<Checker> getCheckers()
     {
-        return Collections.unmodifiableMap(checkers);
+        return Collections.unmodifiableList(checkers);
     }
     public PlayerNumber getPlayerNumber()
     {
@@ -33,19 +32,45 @@ public class Player implements Serializable
     {
         this.username = username;
     }
-
-
-    public synchronized void moveChecker(int from, int to)
+    public void setAvailableMoves(Map<Checker, Set<Integer>> availableMoves)
     {
-        checkers.put(to, checkers.get(from));
-        checkers.remove(from);
-        System.out.println("moved from " + from + " to " + to);
+        this.availableMoves = availableMoves;
+    }
+    public Map<Checker, Set<Integer>> getAvailableMoves()
+    {
+        return availableMoves;
+    }
+
+    public void moveChecker(int from, int to)
+    {
+        for (Checker checker : checkers)
+        {
+            if (checker.getLocation() == from)
+            {
+                checker.setLocation(to);
+                break;
+            }
+        }
+        System.out.println(playerNumber.toString() + " checker moved from " + from + " to " + to);
+    }
+
+    public boolean hasCheckerWithLocation(int location)
+    {
+        for (Checker checker : checkers)
+        {
+            if (checker.getLocation() == location)
+            {
+                return true;
+            }
+        }
+
+        return false;
     }
 
     public void addCheckers(PlayerNumber playerNumber)
     {
         this.playerNumber = playerNumber;
-        checkers = new TreeMap<>();
+        checkers = new ArrayList<>();
 
         for (int x = 0; x < 10; x++)
         {
@@ -63,6 +88,20 @@ public class Player implements Serializable
         }
 
     }
+
+    public boolean availablMovesContainsInt(int value)
+    {
+        boolean returnValue = false;
+
+        for (Set<Integer> set : availableMoves.values())
+        {
+            if (set.contains(value))
+                returnValue = true;
+        }
+
+        return returnValue;
+    }
+
     private void addChecker(int x, int y)
     {
         for (int i = x; i < x + 4; i++)
@@ -71,7 +110,8 @@ public class Player implements Serializable
             {
                 Checker checker = new Checker();
                 checker.setCheckerType(CheckerType.CHECKER);
-                checkers.put(Integer.parseInt(x + "" + y), checker);
+                checker.setLocation(Integer.parseInt(x + "" + y));
+                checkers.add(checker);
             }
         }
     }

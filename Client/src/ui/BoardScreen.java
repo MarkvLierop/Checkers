@@ -60,7 +60,6 @@ public class BoardScreen extends Application
     public void start(Stage stage) throws Exception {
 
         sc = new SocketClient();
-        objectOutputStream = sc.getOutputStream();
         screenSize = Toolkit.getDefaultToolkit().getScreenSize();
 
         player = new Player("username 1"); // TODO: AAnpassen; inloggen

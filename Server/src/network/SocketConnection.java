@@ -1,11 +1,9 @@
 package network;
 
 import classes.Game;
-import classes.Player;
 import classes.game.GameContainer;
 import enums.PlayerNumber;
 import network.command_types.Command;
-import network.commands.AddPlayerTwo;
 import network.commands.NewGame;
 import network.commands.StartGame;
 
@@ -55,9 +53,11 @@ public class SocketConnection implements Runnable {
 
     private void sendCommand(Command command) throws IOException {
         out.writeObject(command);
-        System.out.println("Command sent");
     }
 
+    private void sendInitData(InitialData initialData) throws IOException {
+        out.writeObject(initialData);
+    }
     private void executeIncommingCommand() throws IOException, ClassNotFoundException
     {
         while (true)
@@ -68,7 +68,7 @@ public class SocketConnection implements Runnable {
                 newGame(object);
             }
             else {
-                Command  inObject = (Command) in.readObject();
+                Command  inObject = (Command) object;
                 inObject.setGame(game);
                 inObject.execute();
                 out.writeObject(inObject);
@@ -82,19 +82,13 @@ public class SocketConnection implements Runnable {
     private void newGame(Object object) throws IOException {
         game = gameContainer.newGame(((NewGame) object).getPlayer(), this);
 
-        if (game.getPlayerTwo() == null)
-        {
-            out.writeObject(new InitialData(game, PlayerNumber.ONE));
-        }
-        else
+        if (game.getPlayerTwo() != null)
         {
             game.startGame();
-            out.writeObject(new InitialData(game, PlayerNumber.TWO));
+            out.writeObject(new InitialData(game, PlayerNumber.ONE));
             out.writeObject(new StartGame());
-            opponent.sendCommand(new AddPlayerTwo(game.getPlayerTwo()));
+            opponent.sendInitData(new InitialData(game, PlayerNumber.TWO));
             opponent.sendCommand(new StartGame());
         }
-
-        System.out.println("Game sent");
     }
 }

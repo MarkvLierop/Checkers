@@ -2,6 +2,7 @@ package network;
 
 import classes.Game;
 import enums.PlayerNumber;
+import network.command_types.Command;
 import network.command_types.CommandGame;
 import network.command_types.CommandPlayer;
 import ui.GameScreen;
@@ -12,6 +13,7 @@ import java.net.Socket;
 public class SocketClient {
     private ObjectInputStream in;
     private ObjectOutputStream out;
+    private boolean waitingForServer;
     private Game game;
     public PlayerNumber playerNumber;
 
@@ -20,8 +22,13 @@ public class SocketClient {
         return game;
     }
     public PlayerNumber getPlayerNumber() { return playerNumber; }
-    public ObjectOutputStream getOutputStream() {
-        return out;
+    public void setWaitingForServer(boolean waitingForServer)
+    {
+        this.waitingForServer = waitingForServer;
+    }
+    public boolean isWaitingForServerResponse()
+    {
+        return waitingForServer;
     }
 
     public SocketClient()
@@ -34,6 +41,10 @@ public class SocketClient {
         catch (IOException e) {
             e.printStackTrace();
         }
+    }
+
+    public void sendCommand(Command command) throws IOException {
+        out.writeObject(command);
     }
 
     private void setupConnection() throws IOException {
@@ -55,18 +66,21 @@ public class SocketClient {
                 } catch (IOException | ClassNotFoundException e) {
                     e.printStackTrace();
                 }
+
                 if (inObject instanceof CommandGame)
                 {
                     CommandGame cg = (CommandGame) inObject;
                     cg.setGame(game);
                     cg.execute();
+
+                    waitingForServer = false;
                 }
                 else if (inObject instanceof InitialData)
                 {
                     InitialData initialData = ((InitialData)inObject);
                     game = initialData.getGame();
                     playerNumber = initialData.getPlayerNumber();
-                    System.out.println("Game received");
+                    System.out.println("Game received " + playerNumber);
                 }
             }
         }).start();
