@@ -28,10 +28,6 @@ public class Player implements Serializable
         this.playerNumber = playerNumber;
     }
     public String getUsername() { return username; }
-    public Player(String username)
-    {
-        this.username = username;
-    }
     public void setAvailableMoves(Map<Checker, Set<Integer>> availableMoves)
     {
         this.availableMoves = availableMoves;
@@ -39,6 +35,13 @@ public class Player implements Serializable
     public Map<Checker, Set<Integer>> getAvailableMoves()
     {
         return availableMoves;
+    }
+
+    public Player(String username)
+    {
+        this.username = username;
+
+        availableMoves = new HashMap<>();
     }
 
     public void moveChecker(int from, int to)
@@ -102,6 +105,19 @@ public class Player implements Serializable
         return returnValue;
     }
 
+    public void removeCheckerIfExists(int location) {
+        Checker c = null;
+        for (Checker checker : checkers)
+        {
+            if (checker.getLocation() == location)
+            {
+                c = checker;
+            }
+        }
+
+        if (c != null)
+            checkers.remove(c);
+    }
     private void addChecker(int x, int y)
     {
         for (int i = x; i < x + 4; i++)

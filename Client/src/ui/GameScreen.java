@@ -6,6 +6,7 @@ import classes.Player;
 import enums.PlayerNumber;
 import javafx.application.Application;
 import javafx.application.Platform;
+import javafx.scene.Group;
 import javafx.scene.Parent;
 import javafx.scene.Scene;
 import javafx.scene.control.Button;
@@ -16,6 +17,7 @@ import javafx.scene.shape.Circle;
 import javafx.scene.shape.Rectangle;
 import javafx.scene.text.Font;
 import javafx.scene.text.Text;
+import javafx.scene.text.TextAlignment;
 import javafx.stage.Stage;
 import network.SocketClient;
 import network.commands.MoveChecker;
@@ -60,9 +62,9 @@ public class GameScreen extends Application
         return root;
     }
 
-    private synchronized List<Circle> addCheckersToGrid()
+    private synchronized List<Group> addCheckersToGrid()
     {
-        List<Circle> checkers = new ArrayList();
+        List<Group> checkers = new ArrayList();
 
         addPlayerOneCheckers(checkers);
         addPlayerTwoCheckers(checkers);
@@ -70,33 +72,37 @@ public class GameScreen extends Application
         return checkers;
     }
 
-    private void addPlayerOneCheckers(List<Circle> checkers)
+    private void addPlayerOneCheckers(List<Group> checkers)
     {
         for (Checker checker : game.getPlayerOne().getCheckers())
         {
-            Circle checkerCircle = createChecker(checker.getLocation(), game.getPlayerOne().getPlayerNumber());
+            Group checkerGroup = new Group();
+
+            Circle checkerCircle = createChecker(checkerGroup,checker.getLocation(), game.getPlayerOne().getPlayerNumber());
             checkerCircle.setFill(Color.PINK);
-            checkers.add(checkerCircle);
+
+            checkerGroup.getChildren().add(checkerCircle);
+            checkers.add(checkerGroup);
         }
     }
 
-    private void addPlayerTwoCheckers(List<Circle> checkers)
+    private void addPlayerTwoCheckers(List<Group> checkers)
     {
         for (Checker checker : game.getPlayerTwo().getCheckers())
         {
-            Circle checkerCircle = createChecker(checker.getLocation(), game.getPlayerTwo().getPlayerNumber());
+            Group checkerGroup = new Group();
+
+            Circle checkerCircle = createChecker(checkerGroup, checker.getLocation(), game.getPlayerTwo().getPlayerNumber());
             checkerCircle.setFill(Color.LIGHTBLUE);
-            checkers.add(checkerCircle);
+
+            checkerGroup.getChildren().add(checkerCircle);
+            checkers.add(checkerGroup);
         }
     }
 
-    private Circle createChecker(int location, PlayerNumber playerNumber)
+    private Circle createChecker(Group checkerGroup, int location, PlayerNumber playerNumber)
     {
         Circle checker = new Circle(TILE_SIZE / 3);
-
-        if (sc.getPlayerNumber() == playerNumber)
-            setCheckerEvent(checker, location);
-
         checker.setCenterX(TILE_SIZE / 2);
         checker.setCenterY(TILE_SIZE / 2);
 
@@ -107,23 +113,28 @@ public class GameScreen extends Application
             char chary = s.charAt(1);
             String x = Character.toString(charx);
             String y = Character.toString(chary);
-            checker.setTranslateX(Integer.parseInt(y) * TILE_SIZE + (TILE_SIZE * 2));
-            checker.setTranslateY(Integer.parseInt(x) * TILE_SIZE);
+            checkerGroup.setTranslateX(Integer.parseInt(y) * TILE_SIZE + (TILE_SIZE * 2));
+            checkerGroup.setTranslateY(Integer.parseInt(x) * TILE_SIZE);
         }
         else
         {
-            checker.setTranslateX(location * (TILE_SIZE) + (TILE_SIZE * 2));
-            checker.setTranslateY(0);
+            checkerGroup.setTranslateX(location * (TILE_SIZE) + (TILE_SIZE * 2));
+            checkerGroup.setTranslateY(0);
         }
+
+        setCheckerEvent(checkerGroup, checker, location, playerNumber);
 
         return checker;
     }
 
-    private void setCheckerEvent(Circle checker, int location)
+    private void setCheckerEvent(Group checkerGroup, Circle checker, int location, PlayerNumber ownerPlayerNumber)
     {
         checker.setOnMouseClicked(e -> {
-            if (sc.getPlayerNumber().equals(game.getCurrentTurn()))
+            if (sc.getPlayerNumber().equals(game.getCurrentTurn())
+                    && sc.getPlayerNumber() == ownerPlayerNumber
+                    && selectedCheckerPosition == 0)
             {
+                checkerGroup.getChildren().add(txtCheckMark(checker));
                 selectedCheckerPosition = location;
             }
         });
@@ -206,7 +217,7 @@ public class GameScreen extends Application
                     txtCurrentTurn.setText("Current Turn: " + sc.getGame().getCurrentTurn() + "\n You are " + sc.getPlayerNumber());
                     checkersPane.getChildren().addAll(addCheckersToGrid());
 
-//                    refreshBoardOnTurnStart();
+                    refreshBoardOnTurnStart();
                     break;
                 }
             }
@@ -240,14 +251,6 @@ public class GameScreen extends Application
 
                 if (sc.getGame().getCurrentTurn() == sc.getPlayerNumber())
                 {
-                    for (Set<Integer> set : sc.getGame().getPlayerByPlayerNumber(sc.getPlayerNumber()).getAvailableMoves().values())
-                    {
-                        for (Integer value : set)
-                        {
-                            System.out.println("Available moves " + value);
-                        }
-                    }
-
                     Platform.runLater(this::refresh);
                     break;
                 }
@@ -340,6 +343,16 @@ public class GameScreen extends Application
         txtWaitingForPlayer.setVisible(false);
 
         return txtWaitingForPlayer;
+    }
+
+    private Text txtCheckMark(Circle checker)
+    {
+        Text checkMark = new Text("✔");
+        checkMark.setFill(Color.BLACK);
+        checkMark.setX(checker.getCenterX());
+        checkMark.setY(checker.getCenterY());
+
+        return checkMark;
     }
 
     @Override
