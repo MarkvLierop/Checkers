@@ -31,8 +31,7 @@ public class SocketClient {
         return waitingForServer;
     }
 
-    public SocketClient()
-    {
+    public SocketClient() {
         try
         {
             setupConnection();

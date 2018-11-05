@@ -1,12 +1,15 @@
 package classes;
 
+import com.sun.javafx.image.IntPixelGetter;
 import enums.Operator;
 import enums.PlayerNumber;
+import interfaces.IGame;
+
 import java.io.Serializable;
 import java.util.*;
 import java.util.concurrent.ThreadLocalRandom;
 
-public class Game implements Serializable, Comparable
+public class Game implements IGame, Comparable
 {
     private Player playerOne;
     private Player playerTwo;
@@ -74,12 +77,12 @@ public class Game implements Serializable, Comparable
         {
             case ONE:
                 playerOne.moveChecker(from, to);
-                playerTwo.removeCheckerIfExists(from + Math.abs(from - to) / 2);
+//                playerTwo.removeCheckerIfExists(from + Math.abs(from - to) / 2);
                 currentTurn = PlayerNumber.TWO;
                 break;
             case TWO:
                 playerTwo.moveChecker(from, to);
-                playerOne.removeCheckerIfExists(from + Math.abs(from - to) / 2);
+//                playerOne.removeCheckerIfExists(from + Math.abs(from - to) / 2);
                 currentTurn = PlayerNumber.ONE;
                 break;
         }
@@ -87,74 +90,72 @@ public class Game implements Serializable, Comparable
         setAvailableMoves();
     }
 
-    private void lookForPossibleHits(Player currentPlayer, Player opponent)
-    {
-        Map<Checker, Set<Integer>> checkerWithHits = new HashMap<>();
-        int highestHitCount = 0;
+//    private void lookForPossibleHits(Player currentPlayer, Player opponent)
+//    {
+//        Map<Checker, Set<Integer>> checkerWithHits = new HashMap<>();
+//        int highestHitCount = 0;
+//
+//        for (Checker checker : currentPlayer.getCheckers())
+//        {
+//            Set<Integer> possibleHits = new HashSet<>();
 
-        for (Checker checker : currentPlayer.getCheckers())
-        {
-            Set<Integer> possibleHits = new HashSet<>();
-
-            if (checker.getLocation() % 10 != 0)
-                lookForChecker(possibleHits, currentPlayer, opponent, checker.getLocation(), Operator.ADDITION, NINE);
-            if (checker.getLocation() % 10 != 9)
-                lookForChecker(possibleHits, currentPlayer, opponent, checker.getLocation(), Operator.SUBTRACTION, NINE);
-            if (checker.getLocation() % 10 != 9)
-                lookForChecker(possibleHits, currentPlayer, opponent, checker.getLocation(), Operator.ADDITION, ELEVEN);
-            if (checker.getLocation() % 10 != 0)
-                lookForChecker(possibleHits, currentPlayer, opponent, checker.getLocation(), Operator.SUBTRACTION, ELEVEN);
+//            if (checker.getLocation() % 10 != 0)
+//                lookForChecker(possibleHits, currentPlayer, opponent, checker.getLocation(), Operator.ADDITION, NINE);
+//            if (checker.getLocation() % 10 != 9)
+//                lookForChecker(possibleHits, currentPlayer, opponent, checker.getLocation(), Operator.SUBTRACTION, NINE);
+//            if (checker.getLocation() % 10 != 9)
+//                lookForChecker(possibleHits, currentPlayer, opponent, checker.getLocation(), Operator.ADDITION, ELEVEN);
+//            if (checker.getLocation() % 10 != 0)
+//                lookForChecker(possibleHits, currentPlayer, opponent, checker.getLocation(), Operator.SUBTRACTION, ELEVEN);
 
             // Meerslag gaat voor. Alleen hoogste of gelijkwaardige slag bewaren.
-            if (!possibleHits.isEmpty())
-            {
-                if (possibleHits.size() > highestHitCount)
-                {
-                    highestHitCount = possibleHits.size();
-                    checkerWithHits = new HashMap<>();
-                }
+//            if (!possibleHits.isEmpty())
+//            {
+//                if (possibleHits.size() > highestHitCount)
+//                {
+//                    highestHitCount = possibleHits.size();
+//                    checkerWithHits = new HashMap<>();
+//                }
+//
+//                if (possibleHits.size() >= highestHitCount)
+//                {
+//                    System.out.println(checker.getLocation() + " " + possibleHits);
+//                    checkerWithHits.put(checker, possibleHits);
+//                    currentPlayer.setAvailableMoves(checkerWithHits);
+//                }
+//
+//            }
+//        }
+//        System.out.println(checkerWithHits.size());
+//    }
 
-                if (possibleHits.size() >= highestHitCount)
-                {
-                    checkerWithHits.put(checker, possibleHits);
-                    currentPlayer.setAvailableMoves(checkerWithHits);
-                }
+//    private void lookForChecker(Set<Integer> possibleHits, Player currentPlayer, Player opponent, int checkerLocation, Operator op, int possibleTileNr)
+//    {
+//        if (opponent.hasCheckerWithLocation(op.apply(checkerLocation, possibleTileNr))){
+//            checkForTile(possibleHits, currentPlayer, opponent, op.apply(checkerLocation, possibleTileNr), op, possibleTileNr);
+//        }
+//    }
 
-            }
-        }
-
-    }
-
-    private void lookForChecker(Set<Integer> possibleHits, Player currentPlayer, Player opponent, int checkerLocation, Operator op, int possibleTileNr)
-    {
-        if (opponent.hasCheckerWithLocation(op.apply(checkerLocation, possibleTileNr))){
-            checkForTile(possibleHits, currentPlayer, opponent, op.apply(checkerLocation, possibleTileNr), op, possibleTileNr);
-        }
-    }
-
-    private void checkForTile(Set<Integer> possibleHits, Player currentPlayer,  Player opponent, int checkerLocation, Operator op, int possibleTileNr)
-    {
-        if (!opponent.hasCheckerWithLocation(op.apply(checkerLocation, possibleTileNr)) &&
-                !currentPlayer.hasCheckerWithLocation(op.apply(checkerLocation, possibleTileNr)) &&
-                !possibleHits.contains(op.apply(checkerLocation, possibleTileNr)))
-        {
-            possibleHits.add(op.apply(checkerLocation, possibleTileNr));
-            if (checkerLocation % 10 != 0)
-                lookForChecker(possibleHits, currentPlayer, opponent, op.apply(checkerLocation, possibleTileNr), Operator.ADDITION, NINE);
-            if (checkerLocation % 10 != 9)
-                lookForChecker(possibleHits, currentPlayer, opponent, op.apply(checkerLocation, possibleTileNr), Operator.SUBTRACTION, NINE);
-            if (checkerLocation % 10 != 9)
-                lookForChecker(possibleHits, currentPlayer, opponent, op.apply(checkerLocation, possibleTileNr), Operator.ADDITION, ELEVEN);
-            if (checkerLocation % 10 != 0)
-                lookForChecker(possibleHits, currentPlayer, opponent, op.apply(checkerLocation, possibleTileNr), Operator.SUBTRACTION, ELEVEN);
-        }
-    }
+//    private void checkForTile(Set<Integer> possibleHits, Player currentPlayer,  Player opponent, int checkerLocation, Operator op, int possibleTileNr)
+//    {
+//        if (!opponent.hasCheckerWithLocation(op.apply(checkerLocation, possibleTileNr)) &&
+//                !currentPlayer.hasCheckerWithLocation(op.apply(checkerLocation, possibleTileNr)) &&
+//                !possibleHits.contains(op.apply(checkerLocation, possibleTileNr)))
+//        {
+//            possibleHits.add(op.apply(checkerLocation, possibleTileNr));
+//            if (checkerLocation % 10 != 0 && !(op.apply(checkerLocation, possibleTileNr) > 99))
+//                lookForChecker(possibleHits, currentPlayer, opponent, op.apply(checkerLocation, possibleTileNr), Operator.ADDITION, NINE);
+//            if (checkerLocation % 10 != 9 && !(op.apply(checkerLocation, possibleTileNr) < 0))
+//                lookForChecker(possibleHits, currentPlayer, opponent, op.apply(checkerLocation, possibleTileNr), Operator.SUBTRACTION, NINE);
+//            if (checkerLocation % 10 != 9 && !(op.apply(checkerLocation, possibleTileNr) > 99))
+//                lookForChecker(possibleHits, currentPlayer, opponent, op.apply(checkerLocation, possibleTileNr), Operator.ADDITION, ELEVEN);
+//            if (checkerLocation % 10 != 0 && !(op.apply(checkerLocation, possibleTileNr) < 0))
+//                lookForChecker(possibleHits, currentPlayer, opponent, op.apply(checkerLocation, possibleTileNr), Operator.SUBTRACTION, ELEVEN);
+//        }
+//    }
 
     private void setAvailableMoves()
     {
-        playerOne.getAvailableMoves().clear();
-        playerTwo.getAvailableMoves().clear();
-
         lookForPossibleHits(playerOne, playerTwo);
         lookForPossibleHits(playerTwo, playerOne);
 
@@ -169,37 +170,121 @@ public class Game implements Serializable, Comparable
         }
     }
 
-    private void checkForAvailableMoves(Player currentPlayer, Player opponent, Operator op)
+    private void lookForPossibleHits(Player currentPlayer, Player opponent)
     {
-        Map<Checker, Set<Integer>> availableMoves = new HashMap<>();
+        Map<Checker, List<Integer>> checkersAndPossiblePositions = new HashMap<>();
 
         for (Checker checker : currentPlayer.getCheckers())
         {
-            Set<Integer> moves = new HashSet<>();
+            List<Integer> possiblePositions = new ArrayList<>();
+            lookForCheckersInAllDirections(checkersAndPossiblePositions, possiblePositions, currentPlayer, opponent,
+                                            checker, checker.getLocation());
+        }
 
-            if (!isCheckerLocatedOn(currentPlayer, opponent, op.apply(checker.getLocation(), NINE)))
+//        keepHighestHitsOnly(checkersAndPossiblePositions);
+        currentPlayer.setAvailableMoves(checkersAndPossiblePositions);
+    }
+
+    private void lookForCheckersInAllDirections(Map<Checker, List<Integer>> checkersAndPossiblePositions, List<Integer> possiblePositions,
+                                                Player currentPlayer, Player opponent, Checker checker, int checkerLocation)
+    {
+        checkIfOpponentHasCheckerLocatedOn(checkersAndPossiblePositions, possiblePositions, currentPlayer, opponent,
+                checker,checkerLocation - NINE, NINE, Operator.SUBTRACTION);
+        checkIfOpponentHasCheckerLocatedOn(checkersAndPossiblePositions, possiblePositions, currentPlayer, opponent,
+                checker,checkerLocation + NINE, NINE, Operator.ADDITION);
+        checkIfOpponentHasCheckerLocatedOn(checkersAndPossiblePositions, possiblePositions, currentPlayer, opponent,
+                checker,checkerLocation - ELEVEN, ELEVEN, Operator.SUBTRACTION);
+        checkIfOpponentHasCheckerLocatedOn(checkersAndPossiblePositions, possiblePositions, currentPlayer, opponent,
+                checker,checkerLocation + ELEVEN, ELEVEN, Operator.ADDITION);
+    }
+    private void checkIfOpponentHasCheckerLocatedOn(Map<Checker, List<Integer>> checkersAndPossiblePositions, List<Integer> possiblePositions,
+                                             Player currentPlayer, Player opponent, Checker checker, int locationToCheck, int value, Operator operator)
+    {
+        if (opponent.hasCheckerWithLocation(locationToCheck) && (locationToCheck % 10 != 0 && locationToCheck % 10 != 9))
+        {
+            checkForOpenSpot(checkersAndPossiblePositions, possiblePositions, currentPlayer, opponent, checker, locationToCheck, value, operator);
+        }
+    }
+
+    private void checkForOpenSpot(Map<Checker, List<Integer>> checkersAndPossiblePositions, List<Integer> possiblePositions,
+                                   Player currentPlayer, Player opponent, Checker checker, int locationToCheck, int value, Operator operator)
+    {
+        if (!isCheckerLocatedOn(currentPlayer, opponent, operator.apply(locationToCheck, value))
+                && !possiblePositions.contains(operator.apply(locationToCheck, value)))
+        {
+            possiblePositions.add(operator.apply(locationToCheck, value));
+
+            if (checkersAndPossiblePositions.get(checker) == null)
             {
-                if ((checker.getLocation() % 10 != 9 && op == Operator.SUBTRACTION)
-                        || (checker.getLocation() % 10 != 0 && op == Operator.ADDITION))
-                {
-                    moves.add(op.apply(checker.getLocation(), NINE));
-                    availableMoves.put(checker, moves);
-                }
+                checkersAndPossiblePositions.put(checker, possiblePositions);
             }
-            if (!isCheckerLocatedOn(currentPlayer, opponent, op.apply(checker.getLocation(), ELEVEN)))
+            else
             {
-                if (checker.getLocation() % 10 != 9 && op == Operator.ADDITION
-                        || (checker.getLocation() % 10 != 0 && op == Operator.SUBTRACTION))
-                {
-                    moves.add(op.apply(checker.getLocation(), ELEVEN));
-                    availableMoves.put(checker, moves);
-                }
+                checkersAndPossiblePositions.get(checker).clear();
+                checkersAndPossiblePositions.get(checker).addAll(possiblePositions);
             }
+
+            System.out.println(checkersAndPossiblePositions.get(checker));
+            lookForCheckersInAllDirections(checkersAndPossiblePositions, possiblePositions, currentPlayer, opponent,
+                                            checker, operator.apply(locationToCheck, value));
+        }
+    }
+
+    private void checkForAvailableMoves(Player currentPlayer, Player opponent, Operator op)
+    {
+        Map<Checker, List<Integer>> availableMoves = new HashMap<>();
+
+        for (Checker checker : currentPlayer.getCheckers())
+        {
+            List<Integer> moves = new ArrayList<>();
+
+            checkForOpenSpot(currentPlayer, opponent, checker, availableMoves, moves, NINE,
+                    op, Operator.SUBTRACTION, Operator.ADDITION);
+            checkForOpenSpot(currentPlayer, opponent, checker, availableMoves, moves, ELEVEN,
+                    op, Operator.ADDITION, Operator.SUBTRACTION);
         }
 
         currentPlayer.setAvailableMoves(availableMoves);
     }
 
+    private void checkForOpenSpot(Player currentPlayer, Player opponent, Checker checker,
+                                  Map<Checker, List<Integer>> availableMoves, List<Integer> moves,
+                                  int value, Operator directionOp, Operator variableOp1, Operator variableOp2)
+    {
+        if (!isCheckerLocatedOn(currentPlayer, opponent, directionOp.apply(checker.getLocation(), value)))
+        {
+            if ((checker.getLocation() % 10 != 9 && directionOp == variableOp1)
+                    || (checker.getLocation() % 10 != 0 && directionOp == variableOp2))
+            {
+                moves.add(directionOp.apply(checker.getLocation(), value));
+                availableMoves.put(checker, moves);
+            }
+        }
+    }
+
+    private void keepHighestHitsOnly(Map<Checker, List<Integer>> checkersAndPossiblePositions)
+    {
+        Map<Checker, List<Integer>> tempCheckersAndPossiblePositions = checkersAndPossiblePositions;
+        int highestHit = 0;
+
+        for (Map.Entry<Checker, List<Integer>> entry : tempCheckersAndPossiblePositions.entrySet())
+        {
+            if (highestHit < entry.getValue().size())
+            {
+                highestHit = entry.getValue().size();
+            }
+            else
+                checkersAndPossiblePositions.remove(entry.getKey());
+        }
+
+        for (Map.Entry<Checker, List<Integer>> entry : tempCheckersAndPossiblePositions.entrySet())
+        {
+            if (highestHit > entry.getValue().size())
+            {
+                checkersAndPossiblePositions.remove(entry.getKey());
+            }
+        }
+    }
     private boolean isCheckerLocatedOn(Player currentPlayer, Player opponent, int tileNumber)
     {
         return opponent.hasCheckerWithLocation(tileNumber) || currentPlayer.hasCheckerWithLocation(tileNumber);

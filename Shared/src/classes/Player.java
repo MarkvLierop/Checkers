@@ -12,7 +12,7 @@ public class Player implements Serializable
     private int wins;
     private int losses;
     private List<Checker> checkers;
-    private Map<Checker, Set<Integer>> availableMoves;
+    private Map<Checker, List<Integer>> availableMoves;
     private PlayerNumber playerNumber;
 
     public List<Checker> getCheckers()
@@ -28,11 +28,11 @@ public class Player implements Serializable
         this.playerNumber = playerNumber;
     }
     public String getUsername() { return username; }
-    public void setAvailableMoves(Map<Checker, Set<Integer>> availableMoves)
+    public void setAvailableMoves(Map<Checker, List<Integer>> availableMoves)
     {
         this.availableMoves = availableMoves;
     }
-    public Map<Checker, Set<Integer>> getAvailableMoves()
+    public Map<Checker, List<Integer>> getAvailableMoves()
     {
         return availableMoves;
     }
@@ -54,7 +54,7 @@ public class Player implements Serializable
                 break;
             }
         }
-        System.out.println(playerNumber.toString() + " checker moved from " + from + " to " + to);
+//        System.out.println(playerNumber.toString() + " checker moved from " + from + " to " + to);
     }
 
     public boolean hasCheckerWithLocation(int location)
@@ -96,7 +96,7 @@ public class Player implements Serializable
     {
         boolean returnValue = false;
 
-        for (Set<Integer> set : availableMoves.values())
+        for (List<Integer> set : availableMoves.values())
         {
             if (set.contains(value))
                 returnValue = true;
