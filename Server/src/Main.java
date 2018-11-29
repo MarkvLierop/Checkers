@@ -1,9 +1,6 @@
-import classes.Game;
-import network.SocketConnection;
-import network.SocketServer;
+import domain.network.SocketServer;
 
 import java.io.IOException;
-import java.net.ServerSocket;
 
 public class Main
 {
