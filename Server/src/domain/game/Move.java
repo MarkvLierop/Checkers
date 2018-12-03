@@ -1,20 +1,21 @@
-package domain.classes.game;
+package domain.game;
 
-import domain.classes.game.checkers.AbstractChecker;
-import domain.classes.game.checkers.Checker;
+import com.google.gson.annotations.Expose;
+import domain.game.checkers.AbstractChecker;
 
 import java.util.HashSet;
 import java.util.Set;
 
 public class Move {
     private Set<Move> moves;
-    private AbstractChecker checkerHit;
+    private int checkerHit;
     private int from;
     private int to;
 
     public Move(int from)
     {
         this.from = from;
+        moves = new HashSet<>();
     }
 
     public int getFrom()
@@ -30,16 +31,13 @@ public class Move {
     {
         this.to = to;
     }
-    public void setCheckerHit(AbstractChecker checkerHit)
+    public void setCheckerHit(int checkerHit)
     {
         this.checkerHit = checkerHit;
     }
 
-    public void addMove(Move move){
-        moves.add(move);
-    }
-    public void newMovesSet()
+    public Set<Move> getMoves()
     {
-        moves = new HashSet<>();
+        return moves;
     }
 }

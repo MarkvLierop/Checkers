@@ -1,8 +1,8 @@
-package domain.classes.game;
+package domain.game;
 
 import com.google.gson.Gson;
-import domain.classes.game.checkers.AbstractChecker;
-import domain.classes.game.checkers.Checker;
+import domain.game.checkers.AbstractChecker;
+import domain.game.checkers.Checker;
 import domain.enums.PlayerNumber;
 import domain.interfaces.IToJson;
 

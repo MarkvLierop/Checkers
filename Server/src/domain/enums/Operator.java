@@ -1,4 +1,4 @@
-package domain.classes.enums;
+package domain.enums;
 
 public enum Operator {
     ADDITION("+") {

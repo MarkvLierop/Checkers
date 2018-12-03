@@ -7,7 +7,7 @@ import java.util.Set;
 
 public class ClientMove {
     private Set<ClientMove> moves;
-    private ClientAbstractChecker checkerHit;
+    private int checkerHit;
     private int from;
     private int to;
 
@@ -23,7 +23,7 @@ public class ClientMove {
         return to;
     }
 
-    public ClientAbstractChecker getCheckerHit() {
+    public int getCheckerHit() {
         return checkerHit;
     }
 

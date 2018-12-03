@@ -1,6 +1,6 @@
 package domain.network;
 
-import domain.classes.game.GameContainer;
+import domain.game.GameContainer;
 
 import java.io.IOException;
 import java.net.ServerSocket;

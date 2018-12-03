@@ -5,12 +5,12 @@ import domain.enums.Action;
 import domain.enums.PlayerNumber;
 import domain.interfaces.IJsonHandler;
 import domain.interfaces.IPacketHandler;
-import domain.classes.game.Game;
-import domain.classes.game.GameContainer;
+import domain.game.Game;
+import domain.game.GameContainer;
 
 import java.io.IOException;
 
-import domain.classes.game.Player;
+import domain.game.Player;
 import domain.utils.JsonUtil;
 
 import java.util.HashMap;

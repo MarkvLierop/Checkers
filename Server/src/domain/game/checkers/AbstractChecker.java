@@ -1,18 +1,16 @@
-package domain.classes.game.checkers;
+package domain.game.checkers;
 
 import com.google.gson.Gson;
-import domain.classes.game.Move;
+import domain.game.Move;
 import domain.interfaces.IToJson;
 
-import java.util.ArrayList;
-import java.util.HashSet;
-import java.util.List;
 import java.util.Set;
 
 public abstract class AbstractChecker implements IToJson {
     protected Set<Move> availableMoves;
     protected int location;
 
+    protected transient Set<Move> uniqueMoves;
     protected transient final int NINE = 9;
     protected transient final int ELEVEN = 11;
 

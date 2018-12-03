@@ -1,12 +1,6 @@
 package domain.utils;
 
-import com.google.gson.Gson;
-import com.google.gson.JsonArray;
-import com.google.gson.JsonObject;
-import domain.enums.Action;
-import domain.enums.PlayerNumber;
-import org.json.JSONArray;
-import org.json.JSONObject;
+import com.google.gson.*;
 
 public class JsonUtil {
     private JsonUtil() {

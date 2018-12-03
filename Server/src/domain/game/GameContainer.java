@@ -1,4 +1,4 @@
-package domain.classes.game;
+package domain.game;
 
 import domain.network.SocketConnection;
 

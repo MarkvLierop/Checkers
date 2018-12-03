@@ -1,4 +1,4 @@
-package domain.classes.game;
+package domain.game;
 
 import com.google.gson.Gson;
 import domain.enums.PlayerNumber;
@@ -81,13 +81,13 @@ public class Game implements IToJson, Comparable
     }
 
     @Override
+    public String toJson() {
+        return new Gson().toJson(this);
+    }
+
+    @Override
     public int compareTo(Object o) {
         return 0;
     }
 
-
-    @Override
-    public String toJson() {
-        return new Gson().toJson(this);
-    }
 }

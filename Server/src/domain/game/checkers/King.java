@@ -1,8 +1,6 @@
-package domain.classes.game.checkers;
+package domain.game.checkers;
 
-import java.util.ArrayList;
 import java.util.HashSet;
-import java.util.List;
 import java.util.Set;
 
 public class King extends AbstractChecker {

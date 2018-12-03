@@ -1,7 +1,7 @@
 package domain.network;
 
 import domain.Packet;
-import domain.classes.game.GameContainer;
+import domain.game.GameContainer;
 
 import java.io.*;
 import java.net.Socket;

@@ -49,7 +49,7 @@ public class PacketManager implements IPacketHandler {
             public void handle(String[] parameters) {
                 ClientGame clientGame = (ClientGame)JsonUtil.getObjectFromArray(parameters[0], ClientGame.class);
                 gameContainer.setGame(clientGame);
-                gameContainer.setLocalPlayerNumber((PlayerNumber)JsonUtil.getObjectFromArray(parameters[1], PlayerNumber.class));
+                gameContainer.setLocalPlayerNumber((PlayerNumber) JsonUtil.getObjectFromArray(parameters[1], PlayerNumber.class));
             }
         };
 
