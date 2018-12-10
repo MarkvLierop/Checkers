@@ -20,85 +20,58 @@ public class Checker extends AbstractChecker
     private void lookForCheckersInAllDirections(Set<AbstractChecker> checkersCurrentPlayer,
                                                 Set<AbstractChecker> checkersOpponent)
     {
-        List<Integer> currentMoves;
-        if (location - NINE > 0 && (location - NINE) % 10 != 9)
-        {
-            currentMoves = new ArrayList<>();
-            lookForChecker(checkersCurrentPlayer, checkersOpponent, currentMoves, location, NINE, Operator.SUBTRACTION);
-            if (currentMoves.size() > 0)
-                availableMoves.add(currentMoves);
-        }
-        if (location + NINE < 100 && (location + NINE) % 10 != 0)
-        {
-            currentMoves = new ArrayList<>();
-            lookForChecker(checkersCurrentPlayer, checkersOpponent, currentMoves, location, NINE, Operator.ADDITION);
-            if (currentMoves.size() > 0)
-                availableMoves.add(currentMoves);
-        }
-        if (location - ELEVEN > 0 && (location - ELEVEN) % 10 != 0)
-        {
-            currentMoves = new ArrayList<>();
-            lookForChecker(checkersCurrentPlayer, checkersOpponent, currentMoves, location, ELEVEN, Operator.SUBTRACTION);
-            if (currentMoves.size() > 0)
-                availableMoves.add(currentMoves);
-        }
-        if (location + ELEVEN < 100 && (location + ELEVEN) % 10 != 9)
-        {
-            currentMoves = new ArrayList<>();
-            lookForChecker(checkersCurrentPlayer, checkersOpponent, currentMoves, location, ELEVEN, Operator.ADDITION);
-            if (currentMoves.size() > 0)
-                availableMoves.add(currentMoves);
-        }
+        // Right Top
+        lookInDirection(checkersCurrentPlayer, checkersOpponent, location, NINE, 0, 9, Operator.SUBTRACTION, Operator.BIGGER_THAN);
+        // Left Bottom
+        lookInDirection(checkersCurrentPlayer, checkersOpponent, location, NINE, 100, 0, Operator.ADDITION, Operator.SMALLER_THAN);
+        // Left Top
+        lookInDirection(checkersCurrentPlayer, checkersOpponent, location, ELEVEN, 0, 0, Operator.SUBTRACTION, Operator.BIGGER_THAN);
+        // Right Bottom
+        lookInDirection(checkersCurrentPlayer, checkersOpponent, location, ELEVEN, 100, 9, Operator.ADDITION, Operator.SMALLER_THAN);
     }
+
+    private void lookInDirection(Set<AbstractChecker> checkersCurrentPlayer,
+                                 Set<AbstractChecker> checkersOpponent,
+                                 int location, int directionNr, int bottomTopNr, int edgeNr, Operator op, Operator opCompare)
+    {
+        if (!isWithinGameBoardBoundaries(location, directionNr, bottomTopNr, edgeNr, op, opCompare))
+            return;
+
+        List<Integer> currentMoves = new ArrayList<>();
+        lookForChecker(checkersCurrentPlayer, checkersOpponent, currentMoves, location, directionNr, op);
+        addToMoves(currentMoves);
+    }
+
+    private void lookInDirection(Set<AbstractChecker> checkersCurrentPlayer,
+                                 Set<AbstractChecker> checkersOpponent,
+                                 List<Integer> currentMoves,
+                                 int directionNr, int bottomTopNr, int edgeNr, Operator op, Operator opCompare, int originalAmountOfMoves)
+    {
+        if (!isWithinGameBoardBoundaries(currentMoves.get(currentMoves.size() - 1), directionNr, bottomTopNr, edgeNr, op, opCompare))
+            return;
+
+        if (currentMoves.size() == originalAmountOfMoves)
+        {
+            lookForChecker(checkersCurrentPlayer, checkersOpponent, currentMoves, currentMoves.get(currentMoves.size() - 1), directionNr, op);
+            return;
+        }
+
+        List<Integer> newCurrentMoves = new ArrayList<>(currentMoves);
+        lookForChecker(checkersCurrentPlayer, checkersOpponent, newCurrentMoves, currentMoves.get(currentMoves.size() - 1), directionNr, op);
+        addToMoves(newCurrentMoves);
+    }
+
     private void lookForCheckersInAllDirections(Set<AbstractChecker> checkersCurrentPlayer,
                                                 Set<AbstractChecker> checkersOpponent,
                                                 List<Integer> currentMoves)
     {
         int originalAmountOfMoves = currentMoves.size();
-        if (location - NINE > 0 && (location - NINE) % 10 != 9)
-        {
+        if (isWithinGameBoardBoundaries(currentMoves.get(currentMoves.size() -1), NINE, 0, 9, Operator.SUBTRACTION, Operator.BIGGER_THAN))
             lookForChecker(checkersCurrentPlayer, checkersOpponent, currentMoves, currentMoves.get(currentMoves.size() - 1), NINE, Operator.SUBTRACTION);
-        }
-        if (location + NINE < 100 && (location + NINE) % 10 != 0)
-        {
-            List<Integer> newCurrentMoves;
-            if (currentMoves.size() != originalAmountOfMoves)
-            {
-                newCurrentMoves = currentMoves;
-                lookForChecker(checkersCurrentPlayer, checkersOpponent, newCurrentMoves, currentMoves.get(newCurrentMoves.size() - 1), NINE, Operator.ADDITION);
-                if (newCurrentMoves.size() > 0)
-                    availableMoves.add(newCurrentMoves);
-            }
-            else
-                lookForChecker(checkersCurrentPlayer, checkersOpponent, currentMoves, currentMoves.get(currentMoves.size() - 1), NINE, Operator.ADDITION);
-        }
-        if (location - ELEVEN > 0 && (location - ELEVEN) % 10 != 0)
-        {
-            List<Integer> newCurrentMoves;
-            if (currentMoves.size() != originalAmountOfMoves)
-            {
-                newCurrentMoves = currentMoves;
-                lookForChecker(checkersCurrentPlayer, checkersOpponent, newCurrentMoves, newCurrentMoves.get(currentMoves.size() - 1), ELEVEN, Operator.SUBTRACTION);
-                if (newCurrentMoves.size() > 0)
-                    availableMoves.add(newCurrentMoves);
-            }
-            else
-                lookForChecker(checkersCurrentPlayer, checkersOpponent, currentMoves, currentMoves.get(currentMoves.size() - 1), ELEVEN, Operator.SUBTRACTION);
-        }
-        if (location + ELEVEN < 100 && (location + ELEVEN) % 10 != 9)
-        {
-            List<Integer> newCurrentMoves;
-            if (currentMoves.size() != originalAmountOfMoves)
-            {
-                newCurrentMoves = currentMoves;
-                lookForChecker(checkersCurrentPlayer, checkersOpponent, newCurrentMoves, newCurrentMoves.get(currentMoves.size() - 1), ELEVEN, Operator.ADDITION);
-                if (newCurrentMoves.size() > 0)
-                    availableMoves.add(newCurrentMoves);
-            }
-            else
-                lookForChecker(checkersCurrentPlayer, checkersOpponent, currentMoves, currentMoves.get(currentMoves.size() - 1), ELEVEN, Operator.ADDITION);
 
-        }
+        lookInDirection(checkersCurrentPlayer, checkersOpponent, currentMoves, NINE, 100, 0, Operator.ADDITION, Operator.SMALLER_THAN, originalAmountOfMoves);
+        lookInDirection(checkersCurrentPlayer, checkersOpponent, currentMoves, ELEVEN, 0, 0, Operator.SUBTRACTION, Operator.BIGGER_THAN, originalAmountOfMoves);
+        lookInDirection(checkersCurrentPlayer, checkersOpponent, currentMoves, ELEVEN, 100, 9, Operator.ADDITION, Operator.SMALLER_THAN, originalAmountOfMoves);
     }
 
     private void lookForChecker(Set<AbstractChecker> checkersCurrentPlayer,
@@ -141,5 +114,17 @@ public class Checker extends AbstractChecker
             }
         }
         return false;
+    }
+
+    private boolean isWithinGameBoardBoundaries(int location, int directionNr, int bottomTopNr, int edgeNr, Operator op, Operator opCompare)
+    {
+        return opCompare.apply(op.apply(location, directionNr), bottomTopNr) == 1
+                && op.apply(location, directionNr) % 10 != edgeNr;
+    }
+
+    private void addToMoves(List<Integer> currentMoves)
+    {
+        if (currentMoves.size() > 0)
+            availableMoves.add(currentMoves);
     }
 }

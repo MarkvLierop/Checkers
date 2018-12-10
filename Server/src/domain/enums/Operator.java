@@ -10,6 +10,16 @@ public enum Operator {
         @Override public int apply(int value1, int value2) {
             return value1 - value2;
         }
+    },
+    BIGGER_THAN(">"){
+        @Override public int apply(int value1, int value2) {
+            return (value1 > value2) ? 1 : 0;
+        }
+    },
+    SMALLER_THAN("<"){
+        @Override public int apply(int value1, int value2) {
+            return (value1 < value2) ? 1 : 0;
+        }
     };
 
     private final String text;

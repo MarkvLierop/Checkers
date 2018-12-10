@@ -4,6 +4,7 @@ import com.google.gson.Gson;
 import domain.game.checkers.AbstractChecker;
 import domain.game.checkers.Checker;
 import domain.enums.PlayerNumber;
+import domain.game.checkers.King;
 import domain.interfaces.IToJson;
 
 import java.util.*;
@@ -37,10 +38,10 @@ public class Player implements IToJson
             if (checker.getLocation() == from)
             {
                 checker.setLocation(to);
+                checker = upgradeChecker(checker);
                 break;
             }
         }
-        System.out.println(playerNumber.toString() + " checker moved from " + from + " to " + to);
     }
 
     public void calculateAvailableMoves(Set<AbstractChecker> checkersOpponent)
@@ -103,6 +104,13 @@ public class Player implements IToJson
         }
     }
 
+    private AbstractChecker upgradeChecker(AbstractChecker checker)
+    {
+        if ((checker.getLocation() < 10 && playerNumber == PlayerNumber.TWO) ||
+                (checker.getLocation() > 90 && playerNumber == PlayerNumber.ONE) && checker instanceof Checker)
+            return new King(checker.getLocation());
+        return checker;
+    }
     public void removeCheckerIfExists(int location) {
         AbstractChecker c = null;
         for (AbstractChecker checker : checkers)
