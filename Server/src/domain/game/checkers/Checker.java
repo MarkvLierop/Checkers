@@ -1,10 +1,8 @@
 package domain.game.checkers;
 
 import domain.enums.Operator;
-import domain.game.Move;
 
-import java.util.HashSet;
-import java.util.Set;
+import java.util.*;
 
 public class Checker extends AbstractChecker
 {
@@ -12,79 +10,125 @@ public class Checker extends AbstractChecker
         super(location);
     }
 
+    @Override
     public void calculateAvailableMoves(Set<AbstractChecker> checkersCurrentPlayer, Set<AbstractChecker> checkersOpponent)
     {
         availableMoves = new HashSet<>();
-        uniqueMoves = new HashSet<>();
-        lookForCheckersInAllDirections(checkersCurrentPlayer, checkersOpponent, availableMoves, location);
+        lookForCheckersInAllDirections(checkersCurrentPlayer, checkersOpponent);
     }
 
     private void lookForCheckersInAllDirections(Set<AbstractChecker> checkersCurrentPlayer,
-                                                Set<AbstractChecker> checkersOpponent,
-                                                Set<Move> movesList, int checkerLocation)
+                                                Set<AbstractChecker> checkersOpponent)
     {
-        if (location - NINE > 0 && location - NINE % 10 != 9)
+        List<Integer> currentMoves;
+        if (location - NINE > 0 && (location - NINE) % 10 != 9)
         {
-            lookForChecker(checkersCurrentPlayer, checkersOpponent, movesList, checkerLocation, NINE, Operator.SUBTRACTION);
+            currentMoves = new ArrayList<>();
+            lookForChecker(checkersCurrentPlayer, checkersOpponent, currentMoves, location, NINE, Operator.SUBTRACTION);
+            if (currentMoves.size() > 0)
+                availableMoves.add(currentMoves);
         }
-        if (location + NINE < 100 && location + NINE % 10 != 0)
+        if (location + NINE < 100 && (location + NINE) % 10 != 0)
         {
-            lookForChecker(checkersCurrentPlayer, checkersOpponent, movesList, checkerLocation, NINE, Operator.ADDITION);
+            currentMoves = new ArrayList<>();
+            lookForChecker(checkersCurrentPlayer, checkersOpponent, currentMoves, location, NINE, Operator.ADDITION);
+            if (currentMoves.size() > 0)
+                availableMoves.add(currentMoves);
         }
-        if (location - ELEVEN > 0 && location - ELEVEN % 10 != 0)
+        if (location - ELEVEN > 0 && (location - ELEVEN) % 10 != 0)
         {
-            lookForChecker(checkersCurrentPlayer, checkersOpponent, movesList, checkerLocation, ELEVEN, Operator.SUBTRACTION);
+            currentMoves = new ArrayList<>();
+            lookForChecker(checkersCurrentPlayer, checkersOpponent, currentMoves, location, ELEVEN, Operator.SUBTRACTION);
+            if (currentMoves.size() > 0)
+                availableMoves.add(currentMoves);
         }
-        if (location + ELEVEN < 100 && location + ELEVEN % 10 != 9)
+        if (location + ELEVEN < 100 && (location + ELEVEN) % 10 != 9)
         {
-            lookForChecker(checkersCurrentPlayer, checkersOpponent, movesList, checkerLocation, ELEVEN, Operator.ADDITION);
+            currentMoves = new ArrayList<>();
+            lookForChecker(checkersCurrentPlayer, checkersOpponent, currentMoves, location, ELEVEN, Operator.ADDITION);
+            if (currentMoves.size() > 0)
+                availableMoves.add(currentMoves);
+        }
+    }
+    private void lookForCheckersInAllDirections(Set<AbstractChecker> checkersCurrentPlayer,
+                                                Set<AbstractChecker> checkersOpponent,
+                                                List<Integer> currentMoves)
+    {
+        int originalAmountOfMoves = currentMoves.size();
+        if (location - NINE > 0 && (location - NINE) % 10 != 9)
+        {
+            lookForChecker(checkersCurrentPlayer, checkersOpponent, currentMoves, currentMoves.get(currentMoves.size() - 1), NINE, Operator.SUBTRACTION);
+        }
+        if (location + NINE < 100 && (location + NINE) % 10 != 0)
+        {
+            List<Integer> newCurrentMoves;
+            if (currentMoves.size() != originalAmountOfMoves)
+            {
+                newCurrentMoves = currentMoves;
+                lookForChecker(checkersCurrentPlayer, checkersOpponent, newCurrentMoves, currentMoves.get(newCurrentMoves.size() - 1), NINE, Operator.ADDITION);
+                if (newCurrentMoves.size() > 0)
+                    availableMoves.add(newCurrentMoves);
+            }
+            else
+                lookForChecker(checkersCurrentPlayer, checkersOpponent, currentMoves, currentMoves.get(currentMoves.size() - 1), NINE, Operator.ADDITION);
+        }
+        if (location - ELEVEN > 0 && (location - ELEVEN) % 10 != 0)
+        {
+            List<Integer> newCurrentMoves;
+            if (currentMoves.size() != originalAmountOfMoves)
+            {
+                newCurrentMoves = currentMoves;
+                lookForChecker(checkersCurrentPlayer, checkersOpponent, newCurrentMoves, newCurrentMoves.get(currentMoves.size() - 1), ELEVEN, Operator.SUBTRACTION);
+                if (newCurrentMoves.size() > 0)
+                    availableMoves.add(newCurrentMoves);
+            }
+            else
+                lookForChecker(checkersCurrentPlayer, checkersOpponent, currentMoves, currentMoves.get(currentMoves.size() - 1), ELEVEN, Operator.SUBTRACTION);
+        }
+        if (location + ELEVEN < 100 && (location + ELEVEN) % 10 != 9)
+        {
+            List<Integer> newCurrentMoves;
+            if (currentMoves.size() != originalAmountOfMoves)
+            {
+                newCurrentMoves = currentMoves;
+                lookForChecker(checkersCurrentPlayer, checkersOpponent, newCurrentMoves, newCurrentMoves.get(currentMoves.size() - 1), ELEVEN, Operator.ADDITION);
+                if (newCurrentMoves.size() > 0)
+                    availableMoves.add(newCurrentMoves);
+            }
+            else
+                lookForChecker(checkersCurrentPlayer, checkersOpponent, currentMoves, currentMoves.get(currentMoves.size() - 1), ELEVEN, Operator.ADDITION);
+
         }
     }
 
     private void lookForChecker(Set<AbstractChecker> checkersCurrentPlayer,
                                 Set<AbstractChecker> checkersOpponent,
-                                Set<Move> movesList, int checkerLocation, int value, Operator operator)
+                                List<Integer> currentMoves,
+                                int currentLocation, int value, Operator operator)
     {
-        Move move = new Move(checkerLocation);
-        int locationToCheck = operator.apply(move.getFrom(), value);
-
-        if (playerHasChecker(checkersCurrentPlayer, locationToCheck))
-            return;
+        int locationToCheck = operator.apply(currentLocation, value);
 
         if (playerHasChecker(checkersOpponent, locationToCheck))
-            lookForOpenSpot(checkersCurrentPlayer, checkersOpponent, movesList, move, locationToCheck, value, operator);
+            lookForOpenSpot(checkersCurrentPlayer, checkersOpponent, currentMoves, locationToCheck, value, operator);
     }
 
     private void lookForOpenSpot(Set<AbstractChecker> checkersCurrentPlayer,
                                  Set<AbstractChecker> checkersOpponent,
-                                 Set<Move> movesList, Move move, int locationToCheck,
+                                 List<Integer> currentMoves, int locationToCheck,
                                  int value, Operator operator)
     {
         int openSpotLocation = operator.apply(locationToCheck, value);
 
-        if (moveIsNotUnique(move.getFrom(), openSpotLocation))
-            return;
         if (playerHasChecker(checkersCurrentPlayer, openSpotLocation))
             return;
         if (playerHasChecker(checkersOpponent, openSpotLocation))
             return;
 
-        move.setTo(openSpotLocation);
-        move.setCheckerHit(locationToCheck);
-        movesList.add(move);
-        uniqueMoves.add(move);
-
-        lookForCheckersInAllDirections(checkersCurrentPlayer, checkersOpponent, move.getMoves(), move.getTo());
-    }
-    private boolean moveIsNotUnique(int from, int to)
-    {
-        for (Move move : uniqueMoves)
+        if (!currentMoves.contains(openSpotLocation))
         {
-            if (move.getFrom() == from && move.getTo() == to)
-                return true;
+            currentMoves.add(openSpotLocation);
+            lookForCheckersInAllDirections(checkersCurrentPlayer, checkersOpponent, currentMoves);
         }
-
-        return false;
     }
 
     private boolean playerHasChecker(Set<AbstractChecker> checkers, int locationToCheck)

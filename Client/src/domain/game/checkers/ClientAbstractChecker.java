@@ -1,7 +1,6 @@
 package domain.game.checkers;
 
 import com.google.gson.Gson;
-import domain.game.ClientMove;
 import domain.interfaces.IToJson;
 
 import java.util.Collections;
@@ -11,7 +10,7 @@ import java.util.Set;
 
 public class ClientAbstractChecker implements IToJson {
 
-    protected Set<ClientMove> availableMoves;
+    protected Set<List<Integer>> availableMoves;
     protected int location;
 
     public ClientAbstractChecker()
@@ -22,7 +21,7 @@ public class ClientAbstractChecker implements IToJson {
     public int getLocation() {
         return location;
     }
-    public Set<ClientMove> getAvailableMoves()
+    public Set<List<Integer>> getAvailableMoves()
     {
         return Collections.unmodifiableSet(availableMoves);
     }

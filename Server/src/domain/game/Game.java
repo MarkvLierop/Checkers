@@ -55,15 +55,10 @@ public class Game implements IToJson, Comparable
                 break;
         }
 
-        calculateAvailableMoves();
-
-        return true;
-    }
-
-    private void calculateAvailableMoves()
-    {
         playerOne.calculateAvailableMoves(playerTwo.getCheckers());
         playerTwo.calculateAvailableMoves(playerOne.getCheckers());
+
+        return true;
     }
 
     public boolean addPlayer(Player player) {

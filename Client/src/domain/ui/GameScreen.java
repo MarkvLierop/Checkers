@@ -164,7 +164,7 @@ public class GameScreen extends Application
                 x % 2 != 0 && y % 2 == 0) {
             if (sc.getGame() != null)
             {
-                if ((sc.getGame().getPlayerByPlayerNumber(player.getPlayerNumber())).availablMovesContainsInt(toLocation))
+                if ((sc.getGame().getPlayerByPlayerNumber(player.getPlayerNumber())).availablMovesContains(toLocation))
                     tile.setFill(Color.DARKRED);
                 else
                     tile.setFill(Color.BLACK);

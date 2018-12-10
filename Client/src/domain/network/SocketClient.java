@@ -5,6 +5,11 @@ import domain.Packet;
 import domain.game.ClientGame;
 import domain.game.ClientGameContainer;
 import domain.enums.PlayerNumber;
+import domain.network.models.Score;
+import org.springframework.http.HttpEntity;
+import org.springframework.http.HttpMethod;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.client.RestTemplate;
 
 import java.io.*;
 import java.net.Socket;
@@ -55,6 +60,20 @@ public class SocketClient {
 
     public void sendPacket(Packet packet) throws IOException {
         out.writeObject(packet);
+    }
+
+    public void sendScore(Score score){
+        RestTemplate restTemplate = new RestTemplate();
+        String uri = "http://localhost:8080/api/score/save";
+        HttpEntity<Score> httpEntity = new HttpEntity<>(score);
+
+        ResponseEntity<Score> responseEntity = restTemplate.exchange(uri, HttpMethod.POST, httpEntity, Score.class);
+
+        if (responseEntity.hasBody()) {
+            Score result = responseEntity.getBody();
+
+            if (result == null) return; // TODO: show error
+        }
     }
 
     private void startPacketListener()

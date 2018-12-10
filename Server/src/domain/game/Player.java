@@ -49,6 +49,8 @@ public class Player implements IToJson
         {
             checker.calculateAvailableMoves(checkers, checkersOpponent);
         }
+
+        keepHighestHits();
     }
 
     public void addCheckers(PlayerNumber playerNumber)
@@ -84,6 +86,23 @@ public class Player implements IToJson
         }
     }
 
+    private void keepHighestHits()
+    {
+        int highestHit = 0;
+
+        for (AbstractChecker checker : checkers)
+        {
+            int hit = checker.getHighestHit();
+            if (hit > highestHit)
+                highestHit = hit;
+        }
+
+        for (AbstractChecker checker : checkers)
+        {
+            checker.removeLowHits(highestHit);
+        }
+    }
+
     public void removeCheckerIfExists(int location) {
         AbstractChecker c = null;
         for (AbstractChecker checker : checkers)
@@ -91,6 +110,7 @@ public class Player implements IToJson
             if (checker.getLocation() == location)
             {
                 c = checker;
+                break;
             }
         }
 

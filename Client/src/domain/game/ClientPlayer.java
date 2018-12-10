@@ -33,30 +33,20 @@ public class ClientPlayer implements IToJson {
         this.username = username;
     }
 
-    public boolean availablMovesContainsInt(int value)
+    public boolean availablMovesContains(int tileLocation)
     {
         for (ClientChecker checker : checkers)
         {
-            if (checkForInt(checker.getAvailableMoves(), value))
-                return true;
+            for (List<Integer> move : checker.getAvailableMoves())
+            {
+                if (move.contains(tileLocation))
+                    return true;
+            }
         }
 
         return false;
     }
 
-    private boolean checkForInt(Set<ClientMove> moves, int value)
-    {
-        for (ClientMove clientMove : moves)
-        {
-            if (clientMove.getTo() == value)
-                return true;
-
-            if (checkForInt(clientMove.getMoves(), value))
-                return true;
-        }
-
-        return false;
-    }
     @Override
     public String toJson() {
         return new Gson().toJson(this);
