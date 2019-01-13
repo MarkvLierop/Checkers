@@ -12,7 +12,39 @@ public class GameContainer {
         games = new TreeMap<>();
     }
 
-    public Game newGame(Player player, SocketConnection connection)
+    public Game findGame(Player player, SocketConnection connection)
+    {
+        Game game = joinGame(player, connection);
+        if (game != null)
+            return game;
+
+        return newGame(player, connection);
+    }
+
+//    public boolean removePlayer(Player player)
+//    {
+//        for (Map.Entry<Game, List<SocketConnection>> pair : games.entrySet())
+//        {
+//            if (pair.getKey().removePlayer(player))
+//            {
+//                return pair.getKey().playerHasLeftActiveGame();
+//            }
+//        }
+//
+//        return false;
+//    }
+
+    private Game newGame(Player player, SocketConnection connection){
+        Game game = new Game();
+        game.addPlayer(player);
+        games.put(game, new ArrayList<SocketConnection>() {{
+            add(connection);
+        }});
+
+        return game;
+    }
+
+    private Game joinGame(Player player, SocketConnection connection)
     {
         for (Map.Entry<Game, List<SocketConnection>> pair : games.entrySet())
         {
@@ -22,19 +54,12 @@ public class GameContainer {
                 pair.getValue().get(0).setOpponent(connection); // dit
                 connection.setOpponent(pair.getValue().get(0));
                 pair.getValue().add(connection);
-                System.out.println("gamefound");
                 pair.getKey().startGame();
 
                 return pair.getKey();
             }
         }
 
-        System.out.println("new game created");
-        Game game = new Game();
-        game.addPlayer(player);
-        games.put(game, new ArrayList<SocketConnection>() {{
-            add(connection);
-        }});
-        return game;
+        return null;
     }
 }

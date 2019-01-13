@@ -1,20 +1,15 @@
 package domain.game;
 
 import com.google.gson.Gson;
+import domain.enums.Operator;
 import domain.game.checkers.AbstractChecker;
-import domain.game.checkers.Checker;
 import domain.enums.PlayerNumber;
-import domain.game.checkers.King;
-import domain.interfaces.IToJson;
 
 import java.util.*;
 
-public class Player implements IToJson
+public class Player
 {
     private String username;
-    private int wins;
-    private int losses;
-    private Set<AbstractChecker> checkers;
     private PlayerNumber playerNumber;
 
     public Player(String username)
@@ -22,72 +17,54 @@ public class Player implements IToJson
         this.username = username;
     }
 
-    public Set<AbstractChecker> getCheckers()
+    public void setPlayerNumber(PlayerNumber playerNumber)
     {
-        return checkers;
+        this.playerNumber = playerNumber;
+    }
+    public String getUsername()
+    {
+        return username;
     }
     public PlayerNumber getPlayerNumber()
     {
         return playerNumber;
     }
 
-    public void moveChecker(int from, int to)
+    public void calculateMoves(AbstractChecker[][] gameBoard)
     {
-        for (AbstractChecker checker : checkers)
-        {
-            if (checker.getLocation() == from)
+        Set<AbstractChecker> checkers = new HashSet<>();
+        boolean obligatedToHit = calculateHits(gameBoard, checkers);
+
+        if (obligatedToHit)
+            keepHighestHits(checkers);
+        else {
+            for (AbstractChecker checker : checkers)
             {
-                checker.setLocation(to);
-                checker = upgradeChecker(checker);
-                break;
+                checker.calculateAvailableMoves(gameBoard, playerNumber == PlayerNumber.ONE ? Operator.SUBTRACTION : Operator.ADDITION);
             }
         }
     }
 
-    public void calculateAvailableMoves(Set<AbstractChecker> checkersOpponent)
+    private boolean calculateHits(AbstractChecker[][] gameBoard, Set<AbstractChecker> checkers)
     {
-        for (AbstractChecker checker : checkers)
+        for (AbstractChecker[] line : gameBoard)
         {
-            checker.calculateAvailableMoves(checkers, checkersOpponent);
-        }
-
-        keepHighestHits();
-    }
-
-    public void addCheckers(PlayerNumber playerNumber)
-    {
-        this.playerNumber = playerNumber;
-        checkers = new HashSet<>();
-
-        for (int x = 0; x < 10; x++)
-        {
-            for (int y = 0; y < 10; y++)
+            for (AbstractChecker checker : line)
             {
-                if (playerNumber == PlayerNumber.ONE && x <= 3)
-                {
-                    addChecker(x, y);
-                }
-                else if (playerNumber == PlayerNumber.TWO && x >= 6)
-                {
-                    addChecker(x, y);
+                if (checker != null && checker.getOwner() == this){
+                    checker.lookforCheckersToHit(gameBoard);
+                    checkers.add(checker);
+
+                    if (checker.hasCheckersToHit())
+                        return true;
                 }
             }
         }
+
+        return false;
     }
 
-    private void addChecker(int x, int y)
-    {
-        for (int i = x; i < x + 4; i++)
-        {
-            if (x == i && Integer.parseInt(x + "" + y) % 2 != i % 2)
-            {
-                AbstractChecker checker = new Checker(Integer.parseInt(x + "" + y));
-                checkers.add(checker);
-            }
-        }
-    }
-
-    private void keepHighestHits()
+    private void keepHighestHits(Set<AbstractChecker> checkers)
     {
         int highestHit = 0;
 
@@ -102,32 +79,5 @@ public class Player implements IToJson
         {
             checker.removeLowHits(highestHit);
         }
-    }
-
-    private AbstractChecker upgradeChecker(AbstractChecker checker)
-    {
-        if ((checker.getLocation() < 10 && playerNumber == PlayerNumber.TWO) ||
-                (checker.getLocation() > 90 && playerNumber == PlayerNumber.ONE) && checker instanceof Checker)
-            return new King(checker.getLocation());
-        return checker;
-    }
-    public void removeCheckerIfExists(int location) {
-        AbstractChecker c = null;
-        for (AbstractChecker checker : checkers)
-        {
-            if (checker.getLocation() == location)
-            {
-                c = checker;
-                break;
-            }
-        }
-
-        if (c != null)
-            checkers.remove(c);
-    }
-
-    @Override
-    public String toJson() {
-        return new Gson().toJson(this);
     }
 }

@@ -1,130 +1,85 @@
 package domain.game.checkers;
 
 import domain.enums.Operator;
+import domain.game.Player;
 
 import java.util.*;
 
 public class Checker extends AbstractChecker
 {
-    public Checker(int location){
-        super(location);
+    public Checker(int x, int y, Player owner){
+        super(x, y, owner);
     }
 
     @Override
-    public void calculateAvailableMoves(Set<AbstractChecker> checkersCurrentPlayer, Set<AbstractChecker> checkersOpponent)
-    {
-        availableMoves = new HashSet<>();
-        lookForCheckersInAllDirections(checkersCurrentPlayer, checkersOpponent);
+    public void lookforCheckersToHit(AbstractChecker[][] gameBoard) {
+        clearLists();
+        lookForCheckersInAllDirections(gameBoard, new ArrayList<>(), x, y);
     }
 
-    private void lookForCheckersInAllDirections(Set<AbstractChecker> checkersCurrentPlayer,
-                                                Set<AbstractChecker> checkersOpponent)
-    {
-        // Right Top
-        lookInDirection(checkersCurrentPlayer, checkersOpponent, location, NINE, 0, 9, Operator.SUBTRACTION, Operator.BIGGER_THAN);
-        // Left Bottom
-        lookInDirection(checkersCurrentPlayer, checkersOpponent, location, NINE, 100, 0, Operator.ADDITION, Operator.SMALLER_THAN);
-        // Left Top
-        lookInDirection(checkersCurrentPlayer, checkersOpponent, location, ELEVEN, 0, 0, Operator.SUBTRACTION, Operator.BIGGER_THAN);
-        // Right Bottom
-        lookInDirection(checkersCurrentPlayer, checkersOpponent, location, ELEVEN, 100, 9, Operator.ADDITION, Operator.SMALLER_THAN);
+    @Override
+    public void calculateAvailableMoves(AbstractChecker[][] gameBoard, Operator xDirection) {
+        clearLists();
+        calculateDirection(gameBoard, xDirection, Operator.ADDITION);
+        calculateDirection(gameBoard, xDirection, Operator.SUBTRACTION);
     }
 
-    private void lookInDirection(Set<AbstractChecker> checkersCurrentPlayer,
-                                 Set<AbstractChecker> checkersOpponent,
-                                 int location, int directionNr, int bottomTopNr, int edgeNr, Operator op, Operator opCompare)
+    private void calculateDirection(AbstractChecker[][] gameBoard, Operator xDirection, Operator yDirection)
     {
-        if (!isWithinGameBoardBoundaries(location, directionNr, bottomTopNr, edgeNr, op, opCompare))
+        if (!locationIsValid(xDirection.apply(x, 1),yDirection.apply(y, 1)))
+            return;
+        if (!locationIsEmpty(gameBoard, xDirection.apply(x, 1), yDirection.apply(y, 1)))
             return;
 
-        List<Integer> currentMoves = new ArrayList<>();
-        lookForChecker(checkersCurrentPlayer, checkersOpponent, currentMoves, location, directionNr, op);
-        addToMoves(currentMoves);
+        List<Integer> moveList = new ArrayList<>();
+        moveList.add(Integer.parseInt(xDirection.apply(x, 1) + "" + yDirection.apply(y, 1)));
+
+        if (!moveList.isEmpty())
+            availableMoves.add(moveList);
     }
 
-    private void lookInDirection(Set<AbstractChecker> checkersCurrentPlayer,
-                                 Set<AbstractChecker> checkersOpponent,
-                                 List<Integer> currentMoves,
-                                 int directionNr, int bottomTopNr, int edgeNr, Operator op, Operator opCompare, int originalAmountOfMoves)
+    private void lookForCheckersInAllDirections(AbstractChecker[][] gameBoard, List<Integer> checkerHitList, int x, int y)
     {
-        if (!isWithinGameBoardBoundaries(currentMoves.get(currentMoves.size() - 1), directionNr, bottomTopNr, edgeNr, op, opCompare))
+        lookForChecker(checkerHitList, gameBoard, x + 1, y - 1, Operator.ADDITION, Operator.SUBTRACTION); // right up
+        lookForChecker(checkerHitList, gameBoard, x - 1, y - 1, Operator.SUBTRACTION, Operator.SUBTRACTION ); // left up
+        lookForChecker(checkerHitList, gameBoard, x + 1, y + 1, Operator.ADDITION, Operator.ADDITION);// right down
+        lookForChecker(checkerHitList, gameBoard, x - 1, y + 1, Operator.SUBTRACTION, Operator.ADDITION); // left down
+    }
+
+    private void lookForChecker(List<Integer> checkerHitList, AbstractChecker[][] gameBoard, int x, int y, Operator xOp, Operator yOp){
+        if (!locationIsValid(x,y))
+            return;
+        if (locationIsEmpty(gameBoard, x, y))
+            return;
+        if (currentPlayerHasChecker(gameBoard, x, y))
             return;
 
-        if (currentMoves.size() == originalAmountOfMoves)
+        if (opponentHasChecker(gameBoard, x, y))
         {
-            lookForChecker(checkersCurrentPlayer, checkersOpponent, currentMoves, currentMoves.get(currentMoves.size() - 1), directionNr, op);
-            return;
-        }
+            List<Integer> newHitList = new ArrayList<>(checkerHitList);
+            lookForOpenSpot(newHitList, gameBoard, xOp.apply(x, 1), yOp.apply(y, 1));
 
-        List<Integer> newCurrentMoves = new ArrayList<>(currentMoves);
-        lookForChecker(checkersCurrentPlayer, checkersOpponent, newCurrentMoves, currentMoves.get(currentMoves.size() - 1), directionNr, op);
-        addToMoves(newCurrentMoves);
-    }
-
-    private void lookForCheckersInAllDirections(Set<AbstractChecker> checkersCurrentPlayer,
-                                                Set<AbstractChecker> checkersOpponent,
-                                                List<Integer> currentMoves)
-    {
-        int originalAmountOfMoves = currentMoves.size();
-        if (isWithinGameBoardBoundaries(currentMoves.get(currentMoves.size() -1), NINE, 0, 9, Operator.SUBTRACTION, Operator.BIGGER_THAN))
-            lookForChecker(checkersCurrentPlayer, checkersOpponent, currentMoves, currentMoves.get(currentMoves.size() - 1), NINE, Operator.SUBTRACTION);
-
-        lookInDirection(checkersCurrentPlayer, checkersOpponent, currentMoves, NINE, 100, 0, Operator.ADDITION, Operator.SMALLER_THAN, originalAmountOfMoves);
-        lookInDirection(checkersCurrentPlayer, checkersOpponent, currentMoves, ELEVEN, 0, 0, Operator.SUBTRACTION, Operator.BIGGER_THAN, originalAmountOfMoves);
-        lookInDirection(checkersCurrentPlayer, checkersOpponent, currentMoves, ELEVEN, 100, 9, Operator.ADDITION, Operator.SMALLER_THAN, originalAmountOfMoves);
-    }
-
-    private void lookForChecker(Set<AbstractChecker> checkersCurrentPlayer,
-                                Set<AbstractChecker> checkersOpponent,
-                                List<Integer> currentMoves,
-                                int currentLocation, int value, Operator operator)
-    {
-        int locationToCheck = operator.apply(currentLocation, value);
-
-        if (playerHasChecker(checkersOpponent, locationToCheck))
-            lookForOpenSpot(checkersCurrentPlayer, checkersOpponent, currentMoves, locationToCheck, value, operator);
-    }
-
-    private void lookForOpenSpot(Set<AbstractChecker> checkersCurrentPlayer,
-                                 Set<AbstractChecker> checkersOpponent,
-                                 List<Integer> currentMoves, int locationToCheck,
-                                 int value, Operator operator)
-    {
-        int openSpotLocation = operator.apply(locationToCheck, value);
-
-        if (playerHasChecker(checkersCurrentPlayer, openSpotLocation))
-            return;
-        if (playerHasChecker(checkersOpponent, openSpotLocation))
-            return;
-
-        if (!currentMoves.contains(openSpotLocation))
-        {
-            currentMoves.add(openSpotLocation);
-            lookForCheckersInAllDirections(checkersCurrentPlayer, checkersOpponent, currentMoves);
+            if (!newHitList.isEmpty())
+                availableHits.add(newHitList);
         }
     }
 
-    private boolean playerHasChecker(Set<AbstractChecker> checkers, int locationToCheck)
+    private void lookForOpenSpot(List<Integer> checkerHitList, AbstractChecker[][] gameBoard, int x, int y){
+        if (!locationIsValid(x,y))
+            return;
+        if (!locationIsEmpty(gameBoard, x, y))
+            return;
+        if (goingBackToOriginalLocation(checkerHitList, x, y))
+            return;
+
+        checkerHitList.add(Integer.parseInt(x + "" + y));
+        lookForCheckersInAllDirections(gameBoard, checkerHitList, x, y);
+    }
+
+    private boolean goingBackToOriginalLocation(List<Integer> checkerHitList, int x, int y)
     {
-        for (AbstractChecker checker : checkers)
-        {
-            if (checker.getLocation() == locationToCheck)
-            {
-                return true;
-            }
-        }
+        if (checkerHitList.size() > 0)
+            return checkerHitList.contains(Integer.parseInt(x + "" + y));
         return false;
-    }
-
-    private boolean isWithinGameBoardBoundaries(int location, int directionNr, int bottomTopNr, int edgeNr, Operator op, Operator opCompare)
-    {
-        return opCompare.apply(op.apply(location, directionNr), bottomTopNr) == 1
-                && op.apply(location, directionNr) % 10 != edgeNr;
-    }
-
-    private void addToMoves(List<Integer> currentMoves)
-    {
-        if (currentMoves.size() > 0)
-            availableMoves.add(currentMoves);
     }
 }

@@ -1,10 +1,8 @@
 package domain.enums;
 
 import com.google.gson.Gson;
-import com.google.gson.JsonObject;
-import domain.interfaces.IToJson;
 
-public enum  PlayerNumber implements IToJson {
+public enum  PlayerNumber {
     ONE,
     TWO;
 

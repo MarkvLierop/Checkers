@@ -1,7 +1,8 @@
 package domain.ui;
 
+import com.google.gson.Gson;
 import domain.Packet;
-import domain.game.checkers.ClientChecker;
+import domain.game.checkers.ClientAbstractChecker;
 import domain.game.ClientPlayer;
 import domain.enums.Action;
 import domain.enums.PlayerNumber;
@@ -16,10 +17,8 @@ import javafx.scene.layout.Pane;
 import javafx.scene.paint.Color;
 import javafx.scene.shape.Circle;
 import javafx.scene.shape.Rectangle;
-import javafx.scene.text.Font;
 import javafx.scene.text.Text;
 import javafx.stage.Stage;
-
 import java.awt.*;
 import java.io.IOException;
 import java.util.ArrayList;
@@ -32,6 +31,7 @@ public class GameScreen extends Application
     private static final int TILE_SIZE = 70;
     private static final int FONT_SIZE = 16;
     private Pane checkersPane;
+    private Pane root;
     private Text txtCurrentTurn;
     private Text txtErrorMessage;
     private Text txtUsernamePlayerOne;
@@ -44,7 +44,7 @@ public class GameScreen extends Application
     private int selectedCheckerPosition = 0;
 
     private Parent createContent() {
-        Pane root = new Pane();
+        root = new Pane();
         checkersPane = new Pane();
 
         checkersPane.getChildren().addAll(createGrid());
@@ -58,42 +58,26 @@ public class GameScreen extends Application
         return root;
     }
 
-    private synchronized List<Group> addCheckersToGrid()
+    private List<Group> addCheckersToGrid()
     {
-        List<Group> checkers = new ArrayList();
+        ArrayList<Group> checkers = new ArrayList<>();
 
-        addPlayerOneCheckers(checkers);
-        addPlayerTwoCheckers(checkers);
+        for (ClientAbstractChecker[] array : sc.getGame().getGameBoard())
+        {
+            for (ClientAbstractChecker checker : array)
+            {
+                if (checker != null)
+                {
+                    Group checkerGroup = new Group();
+                    Circle checkerCircle = createChecker(checkerGroup, checker.getLocation(), checker.getOwner().getPlayerNumber());
+
+                    checkerGroup.getChildren().add(checkerCircle);
+                    checkers.add(checkerGroup);
+                }
+            }
+        }
 
         return checkers;
-    }
-
-    private void addPlayerOneCheckers(List<Group> checkers)
-    {
-        for (ClientChecker checker : sc.getGame().getPlayerOne().getCheckers())
-        {
-            Group checkerGroup = new Group();
-
-            Circle checkerCircle = createChecker(checkerGroup, checker.getLocation(), sc.getGame().getPlayerOne().getPlayerNumber());
-            checkerCircle.setFill(Color.PINK);
-
-            checkerGroup.getChildren().add(checkerCircle);
-            checkers.add(checkerGroup);
-        }
-    }
-
-    private void addPlayerTwoCheckers(List<Group> checkers)
-    {
-        for (ClientChecker checker : sc.getGame().getPlayerTwo().getCheckers())
-        {
-            Group checkerGroup = new Group();
-
-            Circle checkerCircle = createChecker(checkerGroup, checker.getLocation(), sc.getGame().getPlayerTwo().getPlayerNumber());
-            checkerCircle.setFill(Color.LIGHTBLUE);
-
-            checkerGroup.getChildren().add(checkerCircle);
-            checkers.add(checkerGroup);
-        }
     }
 
     private Circle createChecker(Group checkerGroup, int location, PlayerNumber playerNumber)
@@ -101,6 +85,11 @@ public class GameScreen extends Application
         Circle checker = new Circle(TILE_SIZE / 3);
         checker.setCenterX(TILE_SIZE / 2);
         checker.setCenterY(TILE_SIZE / 2);
+
+        if (playerNumber == PlayerNumber.ONE)
+            checker.setFill(Color.LIGHTBLUE);
+        else if (playerNumber == PlayerNumber.TWO)
+            checker.setFill(Color.BROWN);
 
         if (location >= 10)
         {
@@ -130,8 +119,13 @@ public class GameScreen extends Application
                     && player.getPlayerNumber() == ownerPlayerNumber
                     && selectedCheckerPosition == 0)
             {
-                checkerGroup.getChildren().add(txtCheckMark(checker));
-                selectedCheckerPosition = location;
+                if (sc.getGame().hasSelectedRightChecker(player.getPlayerNumber(), location))
+                {
+                    checkerGroup.getChildren().add(txtCheckMark(checker));
+                    selectedCheckerPosition = location;
+                }
+                else
+                    showErrorMessage("Wrong checker selected");
             }
         });
     }
@@ -153,7 +147,6 @@ public class GameScreen extends Application
     private Rectangle createTile(int x, int y)
     {
         int toLocation = Integer.parseInt(x + "" + y);
-
         Rectangle tile = new Rectangle(TILE_SIZE, TILE_SIZE);
         clickTileEvent(tile, toLocation);
 
@@ -164,7 +157,7 @@ public class GameScreen extends Application
                 x % 2 != 0 && y % 2 == 0) {
             if (sc.getGame() != null)
             {
-                if ((sc.getGame().getPlayerByPlayerNumber(player.getPlayerNumber())).availablMovesContains(toLocation))
+                if ((sc.getGame().availableHitsContains(player.getPlayerNumber(), toLocation)))
                     tile.setFill(Color.DARKRED);
                 else
                     tile.setFill(Color.BLACK);
@@ -184,22 +177,20 @@ public class GameScreen extends Application
         tile.setOnMouseClicked(event -> {
             if (selectedCheckerPosition != 0 && player.getPlayerNumber().equals(sc.getGame().getCurrentTurn()))
             {
+                if (!moveIsValid(toLocation))
+                    return;
+
                 try {
                     sc.setWaitingForServer();
-                    sc.sendPacket(new Packet(Action.MOVECHECKER,
-                            new String[] { player.getPlayerNumber().toJson(),
-                                            Integer.toString(selectedCheckerPosition),
-                                            Integer.toString(toLocation)}));
+                    sc.sendPacket(new Packet(Action.MOVE_CHECKER,
+                            new String[] { new Gson().toJson(player),
+                                            formatInt(selectedCheckerPosition),
+                                            formatInt(toLocation)}));
 
                     refreshBoardOnServerResponse();
 
                     refreshBoardOnTurnStart();
                     selectedCheckerPosition = 0;
-//                    if (!showErrorMessage())
-//                    {
-//                        refreshBoardOnTurnStart();
-//                        selectedCheckerPosition = 0;
-//                    }
 
                 } catch (IOException e1) {
                     e1.printStackTrace();
@@ -212,7 +203,7 @@ public class GameScreen extends Application
     {
         btnNewGame.setOnMouseClicked(event ->{
             try {
-                sc.sendPacket(new Packet(Action.NEWGAME, new String[] { player.toJson() }));
+                sc.sendPacket(new Packet(Action.NEW_GAME, new String[] { new Gson().toJson(player) }));
             } catch (IOException e) {
                 e.printStackTrace();
             }
@@ -280,6 +271,7 @@ public class GameScreen extends Application
 
                 if (!sc.isWaitingForServerResponse())
                 {
+                    checkIfGameHasEnded();
                     Platform.runLater(this::refresh);
                     break;
                 }
@@ -314,26 +306,54 @@ public class GameScreen extends Application
         checkersPane.getChildren().addAll(addCheckersToGrid());
     }
 
-    private boolean showErrorMessage()
+    private boolean moveIsValid(int toLocation)
     {
-        if (sc.getGame().getErrorMessage() != null || !sc.getGame().getErrorMessage().equals(""))
+        if ((sc.getGame().playerIsObligatedToHit(player.getPlayerNumber())))
         {
-            txtErrorMessage.setText(sc.getGame().getErrorMessage());
-            txtErrorMessage.setVisible(true);
-
-            Timer timer = new Timer();
-            timer.schedule(new TimerTask() {
-                @Override
-                public void run() {
-                    txtErrorMessage.setVisible(false);
-                    sc.getGame().setErrorMessage("");
-                }
-            }, 2000);
-
-            return true;
+            if (!(sc.getGame().availableHitsContains(player.getPlayerNumber(), toLocation)))
+            {
+                showErrorMessage("You are obligated to hit a checker.");
+                return false;
+            }
         }
-        else
+        else if (!(sc.getGame().availableMovesContains(player.getPlayerNumber(), selectedCheckerPosition, toLocation)))
+        {
+            showErrorMessage("Not a valid move.");
             return false;
+        }
+
+        return true;
+    }
+    private void showErrorMessage(String message)
+    {
+        txtErrorMessage.setText(message);
+        txtErrorMessage.setVisible(true);
+
+        Timer timer = new Timer();
+        timer.schedule(new TimerTask() {
+            @Override
+            public void run() {
+                txtErrorMessage.setVisible(false);
+            }
+        },2000);
+    }
+
+    private void checkIfGameHasEnded()
+    {
+        if (sc.getGame().getWinner() == null)
+            return;
+
+        txtErrorMessage.setText(sc.getGame().getWinner().getUsername() +  " has won the game");
+        txtErrorMessage.setVisible(true);
+        Platform.runLater(() -> checkersPane.getChildren().clear());
+    }
+
+    private String formatInt(int value)
+    {
+        if (value < 10)
+            return String.format("%02d", value);
+
+        return Integer.toString(value);
     }
     /*----------------*/
     /* UI CONTROLS */
@@ -350,41 +370,27 @@ public class GameScreen extends Application
 
     private Text txtUserNamePlayerOne()
     {
-        txtUsernamePlayerOne = new Text("Username: ");
-        txtUsernamePlayerOne.setLayoutY(15);
-        txtUsernamePlayerOne.setFont(new Font(FONT_SIZE));
-
-        return txtUsernamePlayerOne;
+        return txtUsernamePlayerOne = domain.ui.controls.Text.newTextObject("Username: ", 0, 15, true, FONT_SIZE);
     }
 
     private Text txtUserNamePlayerTwo()
     {
-        txtUsernamePlayerTwo = new Text("Username: ");
-        txtUsernamePlayerTwo.setLayoutY(screenSize.getHeight() / 2);
-        txtUsernamePlayerTwo.setFont(new Font(FONT_SIZE));
-
-        return txtUsernamePlayerTwo;
+        return txtUsernamePlayerTwo = domain.ui.controls.Text.newTextObject("Username: ",
+                                    0, (int)screenSize.getHeight() / 2, true, FONT_SIZE);
     }
 
     private Text txtCurrentTurn()
     {
-        txtCurrentTurn = new Text("Current turn: ");
-        txtCurrentTurn.setLayoutY(15);
-        txtCurrentTurn.setLayoutX(TILE_SIZE * 12);
-        txtCurrentTurn.setFont(new Font(FONT_SIZE));
-
-        return txtCurrentTurn;
+        return txtCurrentTurn = domain.ui.controls.Text.newTextObject("Current turn: ",
+                                    TILE_SIZE * 12, 15, true, FONT_SIZE);
     }
 
     private Text txtErrorMessage()
     {
-        txtErrorMessage = new Text("Waiting for a player to join...");
-        txtErrorMessage.setLayoutY(screenSize.height / 2 - txtErrorMessage.getFont().getSize() / 2);
-        txtErrorMessage.setLayoutX(TILE_SIZE * 12);
-        txtErrorMessage.setFont(new Font(25));
-        txtErrorMessage.setVisible(false);
-
-        return txtErrorMessage;
+        int fontSize = 25;
+        return txtErrorMessage  = domain.ui.controls.Text.newTextObject("Waiting for a player to join...",
+                                    TILE_SIZE * 12, (int)(screenSize.height / 2 - fontSize / 2),
+                                    false, fontSize);
     }
 
     private Text txtCheckMark(Circle checker)

@@ -1,5 +1,6 @@
 package domain.network;
 
+import com.google.gson.Gson;
 import domain.Packet;
 import domain.enums.Action;
 import domain.enums.PlayerNumber;
@@ -11,6 +12,8 @@ import domain.game.GameContainer;
 import java.io.IOException;
 
 import domain.game.Player;
+import domain.network.models.Result;
+import domain.network.models.Score;
 import domain.utils.JsonUtil;
 
 import java.util.HashMap;
@@ -52,28 +55,27 @@ public class PacketManager implements IPacketHandler {
         IJsonHandler moveCheckerPacket = new IJsonHandler() {
             @Override
             public void handle(String[] parameters) throws IOException {
-//                if (game.moveChecker((PlayerNumber)JsonUtil.getObjectFromArray(parameters[0], PlayerNumber.class),
-//                        (Integer) JsonUtil.getObjectFromArray(parameters[1], Integer.class),
-//                        (Integer) JsonUtil.getObjectFromArray(parameters[2], Integer.class)))
-//                {
-//                    Packet packet = new Packet(Action.MOVECHECKER, new String[] { game.toJson() });
-//                    socketConnection.sendPacket(packet);
-//                    socketConnection.sendPacketToOpponent(packet);
-//                }
-//                else {
-//                    socketConnection.sendPacket(new Packet(Action.ERRORMESSAGE, new String[] { "Invalid Move." }));
-//                }
-
-                game.moveChecker((PlayerNumber)JsonUtil.getObjectFromArray(parameters[0], PlayerNumber.class),
-                        (Integer) JsonUtil.getObjectFromArray(parameters[1], Integer.class),
-                        (Integer) JsonUtil.getObjectFromArray(parameters[2], Integer.class));
-                Packet packet = new Packet(Action.MOVECHECKER, new String[] { game.toJson() });
+                game.moveChecker((Player) JsonUtil.getObjectFromArray(parameters[0], Player.class),
+                        (Integer) JsonUtil.getObjectFromArray(parameters[1].substring(0, 1), Integer.class),
+                        (Integer) JsonUtil.getObjectFromArray(parameters[1].substring(1, 2), Integer.class),
+                        (Integer) JsonUtil.getObjectFromArray(parameters[2].substring(0, 1), Integer.class),
+                        (Integer) JsonUtil.getObjectFromArray(parameters[2].substring(1, 2), Integer.class));
+                Packet packet = new Packet(Action.MOVE_CHECKER, new String[] { new Gson().toJson(game) });
                 socketConnection.sendPacket(packet);
                 socketConnection.sendPacketToOpponent(packet);
+
+                if (game.gameHasEnded())
+                {
+                    Packet gameEndedPacket = new Packet(Action.GAME_ENDED, new String[] { new Gson().toJson(game) });
+                    socketConnection.sendPacket(gameEndedPacket);
+                    socketConnection.sendPacketToOpponent(gameEndedPacket);
+                    socketConnection.sendScore(
+                            new Score("marky", Result.WIN, 5, 19, "Mark"));
+                }
             }
         };
 
-        registeredPackets.put(Action.MOVECHECKER, moveCheckerPacket);
+        registeredPackets.put(Action.MOVE_CHECKER, moveCheckerPacket);
     }
 
     private void packetNewGame()
@@ -81,18 +83,34 @@ public class PacketManager implements IPacketHandler {
         IJsonHandler newGameObject = new IJsonHandler() {
             @Override
             public void handle(String[] parameterArray) throws IOException {
-                game = gameContainer.newGame((Player)JsonUtil.getObjectFromArray(parameterArray[0], Player.class), socketConnection);
+                game = gameContainer.findGame((Player)JsonUtil.getObjectFromArray(parameterArray[0], Player.class), socketConnection);
 
                 if (game.isGameStarted())
                 {
                     socketConnection.sendPacket(new Packet(
-                            Action.STARTGAME, new String[] { game.toJson(), PlayerNumber.ONE.toJson() }));
+                            Action.START_GAME, new String[] { new Gson().toJson(game), PlayerNumber.ONE.toJson() }));
                     socketConnection.sendPacketToOpponent(new Packet(
-                            Action.STARTGAME, new String[] { game.toJson(), PlayerNumber.TWO.toJson() }));
+                            Action.START_GAME, new String[] { new Gson().toJson(game), PlayerNumber.TWO.toJson() }));
                 }
             }
         };
 
-        registeredPackets.put(Action.NEWGAME, newGameObject);
+        registeredPackets.put(Action.NEW_GAME, newGameObject);
+    }
+
+    private void packetCloseConnection()
+    {
+        IJsonHandler closeConnection = new IJsonHandler() {
+            @Override
+            public void handle(String[] parameters) throws IOException {
+//                if (gameContainer.removePlayer((Player)JsonUtil.getObjectFromArray(parameters[0], Player.class)))
+//                {
+//                    socketConnection.sendPacketToOpponent(new Packet(Action.CLOSE_CONNECTION, new String[]{}));
+//                }
+                socketConnection.closeConnection();
+            }
+        };
+
+        registeredPackets.put(Action.CLOSE_CONNECTION, closeConnection);
     }
 }

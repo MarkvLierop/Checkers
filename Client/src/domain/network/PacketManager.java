@@ -40,6 +40,7 @@ public class PacketManager implements IPacketHandler {
         startGamePacket();
         moveCheckerPacket();
         errorMessagePacket();
+        gameEndedPacket();
     }
 
     private void startGamePacket()
@@ -50,10 +51,11 @@ public class PacketManager implements IPacketHandler {
                 ClientGame clientGame = (ClientGame)JsonUtil.getObjectFromArray(parameters[0], ClientGame.class);
                 gameContainer.setGame(clientGame);
                 gameContainer.setLocalPlayerNumber((PlayerNumber) JsonUtil.getObjectFromArray(parameters[1], PlayerNumber.class));
+                System.out.println(parameters[0]);
             }
         };
 
-        registeredPackets.put(Action.STARTGAME, startGamePacket);
+        registeredPackets.put(Action.START_GAME, startGamePacket);
     }
 
     private void moveCheckerPacket()
@@ -67,9 +69,21 @@ public class PacketManager implements IPacketHandler {
             }
         };
 
-        registeredPackets.put(Action.MOVECHECKER, moveCheckerPacket);
+        registeredPackets.put(Action.MOVE_CHECKER, moveCheckerPacket);
     }
 
+    private void gameEndedPacket()
+    {
+        IJsonHandler gameEndedPacket = new IJsonHandler() {
+            @Override
+            public void handle(String[] parameters) throws IOException {
+                ClientGame clientGame = (ClientGame)JsonUtil.getObjectFromArray(parameters[0], ClientGame.class);
+                gameContainer.setGame(clientGame);
+            }
+        };
+
+        registeredPackets.put(Action.GAME_ENDED, gameEndedPacket);
+    }
     private void errorMessagePacket()
     {
         IJsonHandler errorMessagePacket = new IJsonHandler() {
@@ -79,6 +93,6 @@ public class PacketManager implements IPacketHandler {
             }
         };
 
-        registeredPackets.put(Action.ERRORMESSAGE, errorMessagePacket);
+        registeredPackets.put(Action.ERROR_MESSAGE, errorMessagePacket);
     }
 }

@@ -1,16 +1,24 @@
 package domain.game.checkers;
 
+import domain.enums.Operator;
+import domain.game.Player;
+
 import java.util.HashSet;
-import java.util.Set;
 
 public class King extends AbstractChecker {
-    public King(int location)
+    public King(int x, int y, Player owner)
     {
-        super(location);
+        super(x,y, owner);
     }
 
     @Override
-    public void calculateAvailableMoves(Set<AbstractChecker> checkersCurrentPlayer, Set<AbstractChecker> checkersOpponent) {
-        availableMoves = new HashSet<>();
+    public void lookforCheckersToHit(AbstractChecker[][] gameBoard) {
+        availableHits = new HashSet<>();
     }
+
+    @Override
+    public void calculateAvailableMoves(AbstractChecker[][] gameBoard, Operator direction) {
+        availableHits = new HashSet<>();
+    }
+
 }
